@@ -5,7 +5,7 @@ using UnityEngine;
 public abstract class BaseCondition:MonoBehaviour, IDamagable
 {
     [SerializeField] protected List<Condition> conditions;
-    protected Condition[] passiveConditions;
+    protected Condition[] passiveConditions; // 자동 회복/감소가 실행될 컨디션
 
     public virtual void Init()
     {

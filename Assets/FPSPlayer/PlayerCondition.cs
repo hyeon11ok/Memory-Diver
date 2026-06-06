@@ -27,6 +27,7 @@ public class PlayerCondition:BaseCondition
         if(GetCondition(ConditionType.Stamina).CurrentValue < amount) return false;
 
         GetCondition(ConditionType.Stamina).Decrease(amount);
+        GetCondition(ConditionType.Stamina).SetPassiveDelay(0.5f);
         return true;
     }
 

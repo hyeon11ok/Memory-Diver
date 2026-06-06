@@ -94,13 +94,18 @@ public class InputHandler:MonoBehaviour
     {
         if(jumpInputBuffer.IsActive())
             return; // 점프 입력 버퍼가 활성화되어 있으면 추가 점프 입력을 무시합니다.
-
+        Debug.Log("Jump");
         if(context.phase == InputActionPhase.Started && IsGrounded())
         {
             jumpInputBuffer.Activate(); // 점프 입력 버퍼 활성화
 
             IsJump = true;
         }
+    }
+
+    public void ResetJump() // 점프 입력 초기화
+    {
+        IsJump = false;
     }
 
     private bool IsGrounded() // 점프 가능 레이어 확인

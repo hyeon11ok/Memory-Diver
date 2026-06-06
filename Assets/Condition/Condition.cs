@@ -22,6 +22,7 @@ public class Condition
     private float currentValue; // 현재 값
     [SerializeField] private float passiveValue; // 자동 회복/감소량
     [SerializeField] private bool isPassive; // 자동 회복/감소 여부
+    private float passivedelay = 0;
 
     public ConditionType Type { get => type; }
     public float MaxValue { get => maxValue; }
@@ -54,12 +55,23 @@ public class Condition
     /// </summary>
     public void Passive()
     {
-        Increase(passiveValue * Time.deltaTime);
+        // 스테미너 사용 처럼 현재 증감되는 반대 방식으로 컨디션에 변화가 생겼을 때
+        // 자동 증감에 잠시 딜레이를 주기 위함
+        passivedelay -= Time.deltaTime;
+        if(passivedelay > 0) return;
+        else if(passivedelay < 0) passivedelay = 0;
+
+            Increase(passiveValue * Time.deltaTime);
 
         if(currentValue > maxValue)
             currentValue = maxValue;
         else if(currentValue < 0)
             currentValue = 0;
+    }
+
+    public void SetPassiveDelay(float delay)
+    {
+        passivedelay = delay;
     }
 
     /// <summary>
