@@ -7,7 +7,7 @@ public abstract class BaseCondition:MonoBehaviour, IDamagable
     [SerializeField] protected List<Condition> conditions;
     protected Condition[] passiveConditions;
 
-    protected virtual void Awake()
+    public virtual void Init()
     {
         // 모든 Condition을 초기화합니다.
         foreach(var condition in conditions)
