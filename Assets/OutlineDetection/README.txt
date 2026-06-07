@@ -6,10 +6,16 @@
 - Full Screen Pass Renderer Feature 추가
 - Pass Material에 Outlines 등록
 - Injection Point를 Before Rendering Post Processing으로 변경
+- 플레이어 오브젝트에 PlayerPositionProvider 스크립트 추가
 
 **Material 변수**
 - OutlineThickness : 외곽선 두께
 - OutlineColor : 외곽선 색상
-- ScoutCenter : 렌더링 기준점 위치
-- ScoutRadius : 외곽선 렌더링 범위
+- DetectionCenter : 렌더링 기준점 위치
+- DetectionRadius : 외곽선 렌더링 범위
 - Softness : 렌더링 경계면 흐려지는 범위
+
+**PlayerPositionProvider**
+- DetectionCenter에 플레이어 위치를 전달하는 스크립트
+- DetectionRadius, Softness 변수 조절 가능
+- 외부에서 DetectionRadius 값 조절 가능
