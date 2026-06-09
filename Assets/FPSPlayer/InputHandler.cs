@@ -45,7 +45,6 @@ public class InputHandler:MonoBehaviour
     public bool IsSprint { get; private set; } = false;
 
     // 입력 버퍼 관련 변수
-    private Coroutine jumpInputBufferCoroutine;
     private InputBuffer jumpInputBuffer;
 
     public void Init()
@@ -94,11 +93,11 @@ public class InputHandler:MonoBehaviour
     {
         if(jumpInputBuffer.IsActive())
             return; // 점프 입력 버퍼가 활성화되어 있으면 추가 점프 입력을 무시합니다.
-        Debug.Log("Jump");
+        
         if(context.phase == InputActionPhase.Started && IsGrounded())
         {
             jumpInputBuffer.Activate(); // 점프 입력 버퍼 활성화
-
+            
             IsJump = true;
         }
     }
@@ -112,10 +111,10 @@ public class InputHandler:MonoBehaviour
     {
         Ray[] rays = new Ray[4]
         {
-            new Ray(transform.position + (transform.forward * 0.2f) + (transform.up * 0.01f), Vector3.down),
-            new Ray(transform.position + (-transform.forward * 0.2f) + (transform.up * 0.01f), Vector3.down),
-            new Ray(transform.position + (transform.right * 0.2f) + (transform.up * 0.01f), Vector3.down),
-            new Ray(transform.position + (-transform.right * 0.2f) + (transform.up * 0.01f), Vector3.down)
+            new Ray(transform.position + (transform.forward * 0.2f) + (transform.up * 0.5f), Vector3.down),
+            new Ray(transform.position + (-transform.forward * 0.2f) + (transform.up * 0.5f), Vector3.down),
+            new Ray(transform.position + (transform.right * 0.2f) + (transform.up * 0.5f), Vector3.down),
+            new Ray(transform.position + (-transform.right * 0.2f) + (transform.up * 0.5f), Vector3.down)
         };
 
         for(int i = 0; i < rays.Length; i++)
@@ -125,7 +124,24 @@ public class InputHandler:MonoBehaviour
                 return true;
             }
         }
-
         return false;
+    }
+
+    private void OnDrawGizmos()
+    {
+        if(groundLayerMask == 0)
+            return;
+        Gizmos.color = Color.red;
+        Ray[] rays = new Ray[4]
+        {
+            new Ray(transform.position + (transform.forward * 0.2f) + (transform.up * 0.5f), Vector3.down),
+            new Ray(transform.position + (-transform.forward * 0.2f) + (transform.up * 0.5f), Vector3.down),
+            new Ray(transform.position + (transform.right * 0.2f) + (transform.up * 0.5f), Vector3.down),
+            new Ray(transform.position + (-transform.right * 0.2f) + (transform.up * 0.5f), Vector3.down)
+        };
+        for(int i = 0; i < rays.Length; i++)
+        {
+            Gizmos.DrawRay(rays[i]);
+        }
     }
 }

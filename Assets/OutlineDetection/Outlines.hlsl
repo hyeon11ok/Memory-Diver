@@ -33,7 +33,7 @@ bool IsBehind(float2 screenUV, float2 offset)
 
     // 3. 이제 직관적으로 계산할 수 있습니다!
     // 현재 픽셀 거리(realDist1)가 주변 픽셀(realDist2)보다 0.5m 이상 멀리(뒤에) 있다면?
-    if (realDist1 - realDist2 > 0.5)
+    if (realDist1 - realDist2 > 0.2)
     {
         return true;
     }
@@ -54,11 +54,11 @@ void DepthBasedOutlines_float(float2 screenUV, float px, out float outlines) {
 		for(int j = -1; j <= 1; j++) {
 			if(i == 0 && j == 0) continue; // Skip the center pixel
 			float2 offset = float2(i, j) * px;
-            if(IsBehind(screenUV, offset))
-            {
-                outlines = 0;
-                return;
-            }
+            //if(IsBehind(screenUV, offset))
+            //{
+            //    outlines = 0;
+            //    return;
+            //}
 			float depth = SampleSceneDepth(screenUV + offset);
 			gx += depth * kernels.x[i + 1][j + 1];
             gy += depth * kernels.y[i + 1][j + 1];
@@ -85,11 +85,11 @@ void NormalBasedOutlines_float(float2 screenUV, float2 px, out float outlines)
             if (i == 0 && j == 0)
                 continue; // Skip the center pixel
             float2 offset = float2(i, j) * px;
-            if(IsBehind(screenUV, offset))
-            {
-                outlines = 0;
-                return;
-            }
+            //if(IsBehind(screenUV, offset))
+            //{
+            //    outlines = 0;
+            //    return;
+            //}
             float3 normal = SampleSceneNormals(screenUV + offset);
             float depth = dot(cn, normal);
             gx += depth * kernels.x[i + 1][j + 1];
