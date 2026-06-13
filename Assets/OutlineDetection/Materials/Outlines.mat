@@ -38,7 +38,7 @@ Material:
     m_Ints: []
     m_Floats:
     - _DetectionRadius: 5
-    - _OutlineThickness: 1
+    - _OutlineThickness: 2
     - _ScoutRadius: 5
     - _Softness: 2
     m_Colors:

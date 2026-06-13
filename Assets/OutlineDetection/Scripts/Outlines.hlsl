@@ -3,7 +3,6 @@
 
 void ScannerOutlines_float(float2 screenUV, float2 px, float depthThreshold, float normalThreshold, out float outlines)
 {
-    // 1. 최적화: 8방향 대각선 대신 십자 4방향 오프셋만 사용 (샘플링 최소화)
     float2 offsets[4] =
     {
         float2(0, 1), // Top
@@ -12,34 +11,45 @@ void ScannerOutlines_float(float2 screenUV, float2 px, float depthThreshold, flo
         float2(1, 0) // Right
     };
 
-    // 중앙 픽셀의 Depth와 Normal (단 1번 샘플링)
-    float centerDepth = SampleSceneDepth(screenUV);
+    // 거리에 상관없이 일정한 두께를 위해 선형 깊이(LinearEyeDepth) 사용
+    float centerDepth = LinearEyeDepth(SampleSceneDepth(screenUV), _ZBufferParams);
     float3 centerNormal = SampleSceneNormals(screenUV);
 
     float depthDiff = 0.0;
     float normalDiff = 0.0;
 
-    // 2. 최적화: if문 없는 고속 언롤(Unroll) 루프
     [unroll]
     for (int i = 0; i < 4; i++)
     {
         float2 sampleUV = screenUV + offsets[i] * px;
         
-        // 주변 픽셀 샘플링
-        float sampleDepth = SampleSceneDepth(sampleUV);
+        float sampleDepth = LinearEyeDepth(SampleSceneDepth(sampleUV), _ZBufferParams);
         float3 sampleNormal = SampleSceneNormals(sampleUV);
 
-        // 3. 최적화: 비싼 sqrt 대신 abs 사용
-        depthDiff += abs(centerDepth - sampleDepth);
+        // 1. 깊이 차이 (Depth Diff) 계산
+        float dDiff = sampleDepth - centerDepth;
+        // 2. 노멀 차이 (Normal Diff) 계산
+        float nDiff = 1.0 - saturate(dot(centerNormal, sampleNormal));
         
-        // 내적(dot) 값이 1에 가까울수록 같은 방향. 1에서 빼서 차이를 구함
-        normalDiff += 1.0 - saturate(dot(centerNormal, sampleNormal));
+        // [핵심] 깊이 외곽선: 주변(sample)이 중앙(center)보다 멀리 있을 때만(dDiff > 0) 값을 누적합니다.
+        // 이렇게 하면 배경이나 뒤쪽 오브젝트에는 선이 안 생기고, 무조건 '앞에 있는 오브젝트의 안쪽'에만 그려집니다.
+        // 또한, 노멀 차이가 없는 경우는 깊이 차이가 있어도 선이 생기지 않도록 합니다. (예: 평평한 표면의 경계)
+        if (nDiff != 0)
+            depthDiff += max(0.0, dDiff);
+        
+        // [핵심] 노멀 외곽선 중복 방지
+        // 겹친 오브젝트 경계에서는 노멀 값도 달라서 양쪽 오브젝트 모두에 선이 생길 수 있습니다.
+        // dDiff가 0보다 확실히 작다는 것(예: -0.01 이하)은 현재 픽셀이 뒤에 가려져 있다는 뜻이므로 노멀 엣지 계산을 무시합니다.
+        if (dDiff >= -0.01)
+        {
+            normalDiff += nDiff;
+        }
     }
 
-    // 4. 각각의 한계점(Threshold)을 넘었는지 확인 (step 함수 사용)
+    // Threshold를 넘었는지 확인
     float isDepthEdge = step(depthThreshold, depthDiff);
     float isNormalEdge = step(normalThreshold, normalDiff);
 
-    // Depth와 Normal 중 하나라도 외곽선이면 1 반환 (saturate로 최대치 1 고정)
+    // Depth와 Normal 중 하나라도 외곽선이면 1 반환
     outlines = saturate(isDepthEdge + isNormalEdge);
 }
