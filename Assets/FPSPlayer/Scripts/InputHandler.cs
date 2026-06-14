@@ -38,6 +38,8 @@ public class InputBuffer
 /// </summary>
 public class InputHandler:MonoBehaviour
 {
+    Player player;
+
     [SerializeField] private LayerMask groundLayerMask; // 점프 가능한 레이어
     public Vector2 CurMoveInput { get; private set; } // 현재 입력 값
     public Vector2 MouseDelta { get; private set; }  // 마우스 변화값
@@ -47,8 +49,9 @@ public class InputHandler:MonoBehaviour
     // 입력 버퍼 관련 변수
     private InputBuffer jumpInputBuffer;
 
-    public void Init()
+    public void Init(Player player)
     {
+        this.player = player;
         jumpInputBuffer = new InputBuffer(0.2f); // 점프 입력 버퍼 시간 설정 (예: 0.2초)
     }
 
@@ -97,8 +100,7 @@ public class InputHandler:MonoBehaviour
         if(context.phase == InputActionPhase.Started && IsGrounded())
         {
             jumpInputBuffer.Activate(); // 점프 입력 버퍼 활성화
-            
-            IsJump = true;
+            player.Controller.Jump(); // 점프 실행
         }
     }
 
@@ -125,6 +127,14 @@ public class InputHandler:MonoBehaviour
             }
         }
         return false;
+    }
+
+    public void OnInteractInput(InputAction.CallbackContext context)
+    {
+        if(context.phase == InputActionPhase.Started)
+        {
+            player.Interaction.Interact();
+        }
     }
 
     private void OnDrawGizmos()

@@ -35,10 +35,6 @@ public class PlayerController : MonoBehaviour
         this.inputHandler = inputHandler;
         this.playerCondition = playerCondition;
         rb = GetComponent<Rigidbody>();
-    }
-
-    private void Start()
-    {
         Cursor.lockState = CursorLockMode.Locked;
     }
 
