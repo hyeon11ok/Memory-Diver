@@ -1,208 +1,105 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-
-public enum UIType
-{
-    None,
-    StartUI,
-    MainMenuUI,
-    OptionUI,
-    InGameUI,
-    PauseUI,
-    CoreUpgradeUI,
-    StatusUI,
-    TowerUpgradeUI,
-    TowerBuildUI,
-    GameOverUI,
-    GameClearUI
-}
 
 public class UIManager : Singleton<UIManager>
 {
-    private readonly List<FixedUI> fixedUIs = new();
-    private readonly Dictionary<UIType, WindowUI> windowUIsDic = new();
-    private readonly Dictionary<UIType, PopupUI> popupUIsDic = new();
+    // Enum 대신 Type을 Key로 사용하여 유연성 극대화 (켜진 UI, 꺼진 UI 모두 보관)
+    private readonly Dictionary<Type, BaseUI> uiCache = new();
     private readonly Stack<PopupUI> popupStack = new();
 
-    private void Awake()
-    {
-        SceneManager.sceneUnloaded += ResetManager;
-    }
+    // 프리팹이 위치한 기본 경로 (Resources/UI/ 폴더 내에 프리팹이 있다고 가정)
+    private const string UI_RESOURCE_PATH = "UI/";
 
-    private void ResetManager(Scene cureentScene)
+    public void ResetManager()
     {
-        fixedUIs.Clear();
-        windowUIsDic.Clear();
-        popupUIsDic.Clear();
+        uiCache.Clear();
         popupStack.Clear();
     }
 
     /// <summary>
-    /// 자식 오브젝트에 BaseUI를 상속받은 오브젝트가 있는지 검사
-    /// 부모 UI가 꺼지면 자식 UI는 등록을 못하기 때문
+    /// 제네릭 타입으로 UI를 동적 생성 또는 활성화합니다.
+    /// 사용 예: UIManager.Instance.ShowUI<InventoryUI>();
     /// </summary>
-    /// <param name="parent"></param>
-    private void CheckChildrenAsBaseUI(Transform parent)
+    public T ShowUI<T>() where T : BaseUI
     {
-        BaseUI[] children = parent.GetComponentsInChildren<BaseUI>(true);
+        Type type = typeof(T);
 
-        // 자기 자신을 제외한 다른 UI 객체가 존재하는 경우
-        if(children.Length > 1)
+        // 1. 이미 로드된 적이 있다면 (캐시에 있다면) 바로 켜줍니다.
+        if(uiCache.TryGetValue(type, out BaseUI ui))
         {
-            // 자식 UI 등록
-            for(int i = 1; i < children.Length; i++)
-            {
-                children[i].Initialize();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Scene에 존재하는 WindowUI들이 UIManager에 접근하여 자기 자신을 등록
-    /// </summary>
-    /// <param name="uiType"></param>
-    /// <param name="windowUI"></param>
-    public void SetWindowUI(UIType uiType, WindowUI windowUI)
-    {
-        if(windowUIsDic.ContainsKey(uiType))
-        {
-            Debug.Log("딕셔너리에 이미 존재하는 UI입니다.");
-            return;
+            ui.OnOpen();
+            if(ui is PopupUI p) HandlePopupOpen(p);
+            return ui as T;
         }
 
-        windowUIsDic.Add(uiType, windowUI);
-        CheckChildrenAsBaseUI(windowUI.transform);
-        windowUI.gameObject.SetActive(false);
-    }
+        // 2. 캐시에 없다면 Resources에서 프리팹을 찾아 동적으로 로드합니다.
+        string prefabPath = UI_RESOURCE_PATH + type.Name; // ex) "UI/InventoryUI"
+        GameObject prefab = Resources.Load<GameObject>(prefabPath);
 
-    /// <summary>
-    /// Scene에 존재하는 FixedUI들이 UIManager에 접근하여 자기 자신을 등록
-    /// </summary>
-    /// <param name="fixedUI"></param>
-    public void SetFixedUI(FixedUI fixedUI)
-    {
-        if(fixedUIs.Contains(fixedUI))
+        if(prefab == null)
         {
-            Debug.Log("리스트에 이미 존재하는 UI입니다.");
-            return;
-        }
-
-        fixedUIs.Add(fixedUI);
-        CheckChildrenAsBaseUI(fixedUI.transform);
-        fixedUI.gameObject.SetActive(true);
-    }
-
-    /// <summary>
-    /// Scene에 존재하는 PopupUI들이 UIManager에 접근하여 자기 자신을 등록
-    /// </summary>
-    /// <param name="popupUI"></param>
-    public void SetPopupUI(UIType uiType, PopupUI popupUI)
-    {
-        if(popupUIsDic.ContainsKey(uiType))
-        {
-            Debug.Log("딕셔너리에 이미 존재하는 UI입니다.");
-            return;
-        }
-
-        popupUIsDic.Add(uiType, popupUI);
-        CheckChildrenAsBaseUI(popupUI.transform);
-        popupUI.gameObject.SetActive(false);
-    }
-
-    /// <summary>
-    /// 특정 FixedUI 반환
-    /// </summary>
-    /// <param name="type">반환할 UIType</param>
-    /// <returns></returns>
-    public FixedUI GetFixedUI(UIType type)
-    {
-        FixedUI returnUI = fixedUIs.Find((x) => x.Type.Equals(type));
-        if(returnUI == null)
-        {
-            Debug.LogError($"{type}UI가 현재 Scene에 존재하지 않습니다.");
+            Debug.LogError($"[UIManager] {prefabPath} 경로에서 UI 프리팹을 찾을 수 없습니다.");
             return null;
         }
-        return returnUI;
+
+        // 3. 인스턴스화 후 매니저의 자식으로 배치합니다.
+        GameObject uiObject = Instantiate(prefab, this.transform);
+        T newUI = uiObject.GetComponent<T>();
+
+        if(newUI == null)
+        {
+            Debug.LogError($"[UIManager] {type.Name} 프리팹에 스크립트가 붙어있지 않습니다.");
+            return null;
+        }
+
+        // 4. 초기화, 캐시 저장 후 활성화합니다.
+        newUI.Initialize();
+        uiCache.Add(type, newUI);
+
+        newUI.OnOpen();
+        if(newUI is PopupUI newPopup) HandlePopupOpen(newPopup);
+
+        return newUI;
     }
 
     /// <summary>
-    /// WindowUI 활성화
+    /// UI를 비활성화합니다.
+    /// 사용 예: UIManager.Instance.CloseUI<InventoryUI>();
     /// </summary>
-    /// <param name="uiType"></param>
-    /// <returns>성공 여부</returns>
-    public bool OpenWindow(UIType uiType)
+    public void CloseUI<T>() where T : BaseUI
     {
-        if(!windowUIsDic.ContainsKey(uiType))
+        Type type = typeof(T);
+
+        if(uiCache.TryGetValue(type, out BaseUI ui))
         {
-            Debug.LogError($"{uiType.ToString()}UI가 존재하지 않습니다.");
-            return false;
+            if(ui.gameObject.activeSelf == false) return;
+
+            if(ui is PopupUI popup) HandlePopupClose(popup);
+            ui.OnClose();
         }
-
-        if (windowUIsDic[uiType].gameObject.activeSelf == true)
-            return true;
-
-        windowUIsDic[uiType].gameObject.SetActive(true);
-        windowUIsDic[uiType].OnOpen();
-        return true;
     }
 
-    /// <summary>
-    /// WindowUI 활성화
-    /// </summary>
-    /// <param name="uiType"></param>
-    /// <returns>성공 여부</returns>
-    public bool CloseWindow(UIType uiType)
+    #region 팝업 스택 안전 관리 로직
+    private void HandlePopupOpen(PopupUI popup)
     {
-        if(!windowUIsDic.ContainsKey(uiType))
-        {
-            Debug.LogError($"{uiType.ToString()}UI가 존재하지 않습니다.");
-            return false;
-        }
-
-        if (windowUIsDic[uiType].gameObject.activeSelf == false)
-            return true;
-
-        windowUIsDic[uiType].OnClose();
-        windowUIsDic[uiType].gameObject.SetActive(false);
-        return true;
+        // 팝업이 열릴 때 최상단 스택에 추가
+        popupStack.Push(popup);
+        // (선택) 여기서 팝업의 Sorting Order를 (스택 카운트 * 10) 등으로 올려주는 로직을 넣기 좋습니다.
     }
 
-    /// <summary>
-    /// PopupUI 활성화
-    /// </summary>
-    /// <param name="uiType"></param>
-    /// <returns>성공 여부</returns>
-    public bool OpenPopup(UIType uiType)
+    private void HandlePopupClose(PopupUI popup)
     {
-        if(!popupUIsDic.ContainsKey(uiType))
+        // 무작정 Pop하지 않고, 현재 닫으려는 팝업이 최상단 팝업인지 검증
+        if(popupStack.Count > 0 && popupStack.Peek() == popup)
         {
-            Debug.LogError($"{uiType.ToString()}UI가 존재하지 않습니다.");
-            return false;
+            popupStack.Pop();
         }
-
-        popupUIsDic[uiType].OnOpen();
-        popupUIsDic[uiType].gameObject.SetActive(true);
-        popupStack.Push(popupUIsDic[uiType]);
-        return true;
-    }
-
-    /// <summary>
-    /// PopupUI 비활성화
-    /// </summary>
-    /// <param name="uiType"></param>
-    /// <returns>성공 여부</returns>
-    public bool ClosePopup(UIType uiType)
-    {
-        if(!popupUIsDic.ContainsKey(uiType))
+        else
         {
-            Debug.LogError($"{uiType.ToString()}UI가 존재하지 않습니다.");
-            return false;
+            Debug.LogWarning($"[UIManager] 닫으려는 {popup.GetType().Name} 팝업이 최상단 팝업이 아닙니다. 강제 종료 처리합니다.");
+            // 중간에 있는 팝업이 강제로 닫힌 경우, 스택을 재정렬하는 별도의 로직이 필요할 수 있습니다.
         }
-
-        popupUIsDic[uiType].OnClose();
-        popupUIsDic[uiType].gameObject.SetActive(false);
-        popupStack.Pop();
-        return true;
     }
+    #endregion
 }
