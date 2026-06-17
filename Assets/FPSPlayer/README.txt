@@ -1,7 +1,8 @@
 **1인칭 플레이어**
 
 **주의사항**
-- BaseCondition 필요
+- BaseCondition import 필요
+- UI FrameWork import 필요
 - 점프를 위해 Ground 레이어 설정 필요
 - InputSystem 설정 필요(유니티 6.1버전 이후의 기본 세팅 사용중)
 - Player 프리펩은 모든 클래스 기본 설정을 해놓은 상태로 만듬, 추가로 상황에 맞게 수정
@@ -23,3 +24,7 @@
 **PlayerController**
 - 플레이어 조작 관련 기능 구현
 - 이동 속도, 점프 파워, 마우스 감도 등 존재
+
+**Interaction**
+- 플레이어가 상호작용할 수 있는 오브젝트를 감지하고 상호작용하는 기능 구현
+- 상호작용 가능한 오브젝트는 IInteractable을 상속받아 구현
