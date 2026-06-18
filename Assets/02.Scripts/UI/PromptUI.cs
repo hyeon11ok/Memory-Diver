@@ -1,22 +1,29 @@
 using UnityEngine;
 
+/// <summary>
+/// 아이템 설명 UI등 마우스를 올리면 나오는 UI들에 사용
+/// </summary>
 public abstract class PromptUI : BaseUI
 {
     private RectTransform promptTransform; // 프롬프트 UI의 RectTransform
     [SerializeField] private RectTransform limitTransform; // UI 출력 가능 범위
     [SerializeField] private Vector2 cursorOffset = Vector2.zero; // 마우스가 UI를 가리지 않도록 하는 오프셋
 
+    protected virtual void Update()
+    {
+        SetPromptPosition(Input.mousePosition);
+    }
+
     public override void Initialize()
     {
         base.Initialize();
         promptTransform = GetComponent<RectTransform>();
-        promptTransform.pivot = new Vector2(0.5f, 0.5f); // 기본 피벗을 중앙으로 설정 (필요 시 오버라이드)
+        promptTransform.pivot = new Vector2(0, 0); // 기본 피벗을 좌측 하단으로 설정 (필요 시 오버라이드)
     }
 
     public override void OnOpen()
     {
-        base.OnOpen();
-        SetPromptPosition(limitTransform.rect.center); // 기본 위치 설정 (필요 시 오버라이드)
+        base.OnOpen(); 
     }
 
     /// <summary>
