@@ -38,10 +38,15 @@ Material:
     m_Ints: []
     m_Floats:
     - _GridScale: 5
-    - _Radius: 0
+    - _Radius: -1.5
+    - _ScanRadius: 0
+    - _ScanSoftness: 0.5
+    - _ScanThickness: 0.5
+    - _Softness: 0.5
     - _Thickness: 0.5
     m_Colors:
     - _Center: {r: 0, g: 0, b: 0, a: 0}
     - _Color: {r: 0.2075472, g: 4, b: 3.14959, a: 1}
+    - _ScanColor: {r: 0.2075472, g: 4, b: 3.14959, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

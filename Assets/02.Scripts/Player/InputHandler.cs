@@ -137,6 +137,14 @@ public class InputHandler:MonoBehaviour
         }
     }
 
+    public void OnScanningInput(InputAction.CallbackContext context)
+    {
+        if(context.phase == InputActionPhase.Started)
+        {
+            player.ItemScanner.StartScan();
+        }
+    }
+
     private void OnDrawGizmos()
     {
         if(groundLayerMask == 0)
