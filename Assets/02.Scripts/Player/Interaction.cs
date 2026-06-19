@@ -45,6 +45,7 @@ public class Interaction : MonoBehaviour
                 {
                     curInteractGameObject = hit.collider.gameObject;
                     curInteractable = hit.collider.GetComponent<IInteractable>();
+                    UIManager.Instance.ShowUI<InteractUI>()?.SetInteractText(curInteractable.GetInteractPrompt());
                 }
             }
             else
@@ -53,6 +54,7 @@ public class Interaction : MonoBehaviour
                 {
                     curInteractGameObject = null;
                     curInteractable = null;
+                    UIManager.Instance.CloseUI<InteractUI>();
                 }
             }
         }
