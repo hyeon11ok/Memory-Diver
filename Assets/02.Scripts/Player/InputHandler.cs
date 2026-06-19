@@ -1,37 +1,5 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
-
-public class InputBuffer
-{
-    private float bufferTime; // 버퍼 시간
-    private float timer; // 타이머
-    public InputBuffer(float bufferTime)
-    {
-        this.bufferTime = bufferTime;
-        this.timer = 0;
-    }
-    public void Activate() // 입력 버퍼 활성화
-    {
-        timer = bufferTime;
-    }
-    public void Update() // 타이머 업데이트
-    {
-        if(timer > 0f)
-        {
-            timer -= Time.deltaTime;
-        }
-    }
-    /// <summary>
-    /// 입력 버퍼가 활성화되어 있는지 확인하는 메서드입니다.
-    /// True == 버퍼 활성화, False == 버퍼 비활성화
-    /// </summary>
-    /// <returns></returns>
-    public bool IsActive() // 입력 버퍼 활성 여부 확인
-    {
-        return timer > 0f;
-    }
-}
 
 /// <summary>
 /// 플레이어 입력을 처리하는 클래스입니다. 이동, 점프, 마우스 입력을 관리합니다.
@@ -46,20 +14,26 @@ public class InputHandler:MonoBehaviour
     public bool IsJump { get; private set; } = false;
     public bool IsSprint { get; private set; } = false;
 
-    // 입력 버퍼 관련 변수
-    private InputBuffer jumpInputBuffer;
+    [Space(10)]
+    [Header("Input Delay")]
+    [SerializeField] private InputDelay jumpInputDelay;
+    [SerializeField] private InputDelay scanningInputDelay;
 
     public void Init(Player player)
     {
         this.player = player;
-        jumpInputBuffer = new InputBuffer(0.2f); // 점프 입력 버퍼 시간 설정 (예: 0.2초)
     }
 
     private void Update()
     {
-        if(jumpInputBuffer.IsActive())
+        if(jumpInputDelay.IsActive())
         {
-            jumpInputBuffer.Update(); // 점프 입력 버퍼 타이머 업데이트
+            jumpInputDelay.Update(); // 점프 입력 버퍼 타이머 업데이트
+        }
+
+        if(scanningInputDelay.IsActive())
+        {
+            scanningInputDelay.Update(); // 스캐닝 입력 버퍼 타이머 업데이트
         }
     }
 
@@ -94,12 +68,12 @@ public class InputHandler:MonoBehaviour
 
     public void OnJumpInput(InputAction.CallbackContext context) // 점프(space) 입력 처리
     {
-        if(jumpInputBuffer.IsActive())
+        if(jumpInputDelay.IsActive())
             return; // 점프 입력 버퍼가 활성화되어 있으면 추가 점프 입력을 무시합니다.
         
         if(context.phase == InputActionPhase.Started && IsGrounded())
         {
-            jumpInputBuffer.Activate(); // 점프 입력 버퍼 활성화
+            jumpInputDelay.Activate(); // 점프 입력 버퍼 활성화
             player.Controller.Jump(); // 점프 실행
         }
     }
@@ -139,8 +113,12 @@ public class InputHandler:MonoBehaviour
 
     public void OnScanningInput(InputAction.CallbackContext context)
     {
+        if(scanningInputDelay.IsActive())
+            return; // 스캐닝 입력 버퍼가 활성화되어 있으면 상호작용 입력을 무시합니다.
+
         if(context.phase == InputActionPhase.Started)
         {
+            scanningInputDelay.Activate(); // 스캐닝 입력 버퍼 활성화
             player.ItemScanner.StartScan();
         }
     }

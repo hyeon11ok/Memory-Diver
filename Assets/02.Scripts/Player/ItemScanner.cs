@@ -4,7 +4,7 @@ public class ItemScanner : MonoBehaviour
 {
     [SerializeField] private float scanRadius = 10f;
     [SerializeField] private float scanTime = 0.5f;
-    private float curRadius = 0;
+    private float curRadius = -0.5f;
     private bool isScanning = false;
 
     private readonly int scanRadiusID = Shader.PropertyToID("_ScanRadius");
@@ -32,7 +32,7 @@ public class ItemScanner : MonoBehaviour
 
     void ResetScanner()
     {
-        curRadius = 0;
+        curRadius = -0.5f;
         Shader.SetGlobalFloat(scanRadiusID, curRadius);
         Shader.SetGlobalVector(scanCenterID, transform.position);
     }
