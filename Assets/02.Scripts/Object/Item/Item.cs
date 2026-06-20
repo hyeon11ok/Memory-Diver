@@ -4,7 +4,7 @@ using UnityEngine;
 /// 아이템은 두 종류로 나뉜다.
 /// 회수 목적의 아이템, 사용 목적의 아이템.
 /// </summary>
-public abstract class Item : MonoBehaviour, IInteractable
+public abstract class Item : MonoBehaviour, IInteractable, IScannable
 {
     [SerializeField] private string itemName;
     [SerializeField] private string interactPrompt;

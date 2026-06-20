@@ -1,13 +1,6 @@
 using TMPro;
 using UnityEngine;
 
-public interface IInteractable
-{
-    public string GetInteractPrompt();
-    public void OnInteract(Player player);
-}
-
-
 public class Interaction : MonoBehaviour
 {
     private Player player;

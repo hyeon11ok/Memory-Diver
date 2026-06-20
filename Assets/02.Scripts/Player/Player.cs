@@ -11,7 +11,7 @@ public class Player:MonoBehaviour
     public PlayerCondition Condition { get; private set; }
     public InputHandler InputHandler { get; private set; }
     public Interaction Interaction { get; private set; }
-    public ItemScanner ItemScanner { get; private set; }
+    public Scanner Scanner { get; private set; }
 
     private void Start()
     {
@@ -19,12 +19,12 @@ public class Player:MonoBehaviour
         Condition = GetComponent<PlayerCondition>();
         InputHandler = GetComponent<InputHandler>();
         Interaction = GetComponent<Interaction>();
-        ItemScanner = GetComponent<ItemScanner>();
+        Scanner = GetComponent<Scanner>();
 
         Condition.Init();
         InputHandler.Init(this);
         Controller.Init(InputHandler, Condition);
         Interaction.Init(this);
-        ItemScanner.Init();
+        Scanner.Init();
     }
 }

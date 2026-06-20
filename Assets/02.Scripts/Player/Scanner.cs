@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ItemScanner : MonoBehaviour
+public class Scanner : MonoBehaviour
 {
     [SerializeField] private float scanRadius = 10f;
     [SerializeField] private float scanTime = 0.5f;
-    [SerializeField] private LayerMask itemLayerMask;
+    [SerializeField] private LayerMask scanLayerMask;
 
     private float curRadius = -0.5f;
     private Vector3 scanCenter = new Vector3();
@@ -30,7 +30,7 @@ public class ItemScanner : MonoBehaviour
             curRadius += (scanRadius / scanTime) * Time.deltaTime;
             Shader.SetGlobalFloat(scanRadiusID, curRadius);
 
-            Collider[] items = Physics.OverlapSphere(scanCenter, curRadius, itemLayerMask);
+            Collider[] items = Physics.OverlapSphere(scanCenter, curRadius, scanLayerMask);
             foreach(Collider item in items)
             {
                 int instanceID = item.GetInstanceID();
@@ -38,9 +38,9 @@ public class ItemScanner : MonoBehaviour
                 if(scannedItemIDs.Contains(instanceID))
                     continue; // 이미 스캔된 아이템이면 건너뜀
 
-                if(item.TryGetComponent<Item>(out Item itemComponent))
+                if(item.TryGetComponent<IScannable>(out IScannable scannableObj))
                 {
-                    itemComponent.ScanReflectEffect();
+                    scannableObj.ScanReflectEffect();
                     scannedItemIDs.Add(instanceID); // 스캔된 아이템 ID 저장
                 }
             }
@@ -66,11 +66,5 @@ public class ItemScanner : MonoBehaviour
     {
         isScanning = true;
         ResetScanner();
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.color = Color.cyan;
-        Gizmos.DrawWireSphere(scanCenter, curRadius);
     }
 }
