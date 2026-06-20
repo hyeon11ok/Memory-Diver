@@ -4,7 +4,7 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerCondition))]
 [RequireComponent(typeof(InputHandler))]
 [RequireComponent(typeof(Interaction))]
-[RequireComponent(typeof(ItemScanner))]
+[RequireComponent(typeof(Scanner))]
 public class Player:MonoBehaviour
 {
     public PlayerController Controller { get; private set; }
