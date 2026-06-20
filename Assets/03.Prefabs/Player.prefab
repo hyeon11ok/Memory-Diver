@@ -381,6 +381,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemScanner
   scanRadius: 10
   scanTime: 0.5
+  itemLayerMask:
+    serializedVersion: 2
+    m_Bits: 256
 --- !u!1 &8712146410721670019
 GameObject:
   m_ObjectHideFlags: 0

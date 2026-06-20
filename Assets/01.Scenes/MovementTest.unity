@@ -356,6 +356,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cc3428ef7cb97a468f35b832d61ff1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractItem
+  itemName: TestItem
+  interactPrompt: TestItem
 --- !u!1 &1176431472
 GameObject:
   m_ObjectHideFlags: 0
