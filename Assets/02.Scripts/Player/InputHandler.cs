@@ -119,7 +119,7 @@ public class InputHandler:MonoBehaviour
         if(context.phase == InputActionPhase.Started)
         {
             scanningInputDelay.Activate(); // 스캐닝 입력 버퍼 활성화
-            player.ItemScanner.StartScan();
+            player.Scanner.StartScan();
         }
     }
 
