@@ -1,4 +1,6 @@
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Pool;
 
 /// <summary>
 /// 아이템은 두 종류로 나뉜다.
@@ -6,8 +8,23 @@ using UnityEngine;
 /// </summary>
 public abstract class Item : MonoBehaviour, IInteractable, IScannable
 {
+    [Header("아이템 정보")]
     [SerializeField] private string itemName;
     [SerializeField] private string interactPrompt;
+    [Space(10)]
+    [Header("스캔 반사 이펙트 관련 변수")]
+    [SerializeField] private EchoEffect echoEffect;
+    [SerializeField] private float echoEffectDuration = 1f;
+    [SerializeField] private float echoEffectStartSize = 0f;
+    [SerializeField] private float echoEffectEndSize = 5f;
+    [SerializeField] private Color echoEffectColor = Color.white;
+
+    private IObjectPool<EchoEffect> echoEffectPool;
+
+    protected virtual void Start()
+    {
+        echoEffectPool = PoolManager.Instance.GetOrCreatePool(echoEffect, 20, 50);
+    }
 
     public virtual string GetInteractPrompt()
     {
@@ -21,7 +38,12 @@ public abstract class Item : MonoBehaviour, IInteractable, IScannable
 
     public void ScanReflectEffect()
     {
-        // 아이템이 탐지 되면 반사할 파동 이펙트를 여기서 호출
-        Debug.Log("아이템 스캔 확인");
+        EchoEffect particle = echoEffectPool.Get();
+        particle.gameObject.transform.position = transform.position;
+        particle.Init();
+        particle.SetEffectDuration(echoEffectDuration);
+        particle.SetEffectSizeOverLifetime(echoEffectStartSize, echoEffectEndSize);
+        particle.SetEffectColor(echoEffectColor);
+        particle.PlayEffect();
     }
 }
