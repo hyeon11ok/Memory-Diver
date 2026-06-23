@@ -59,6 +59,9 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
+  playerCamera: {fileID: 1611539868846584283}
+  playerInput: {fileID: 3509615821372562939}
+  audioListener: {fileID: 3939628177268827470}
 --- !u!114 &1943109267510854445
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -473,7 +476,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &9197711006630178855
 Transform:
   m_ObjectHideFlags: 0
@@ -496,7 +499,7 @@ Camera:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8712146410721670019}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 1
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}

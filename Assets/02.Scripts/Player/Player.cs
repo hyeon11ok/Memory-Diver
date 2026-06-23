@@ -1,18 +1,24 @@
 using UnityEngine;
-using Mirror; // 1. Mirror 네임스페이스 추가
+using Mirror;
+using UnityEngine.InputSystem; 
 
 [RequireComponent(typeof(PlayerController))]
 [RequireComponent(typeof(PlayerCondition))]
 [RequireComponent(typeof(InputHandler))]
 [RequireComponent(typeof(Interaction))]
 [RequireComponent(typeof(Scanner))]
-public class Player:NetworkBehaviour // 2. NetworkBehaviour 상속
+public class Player:NetworkBehaviour // NetworkBehaviour 상속
 {
+    [SerializeField] private Camera playerCamera;
+    [SerializeField] private PlayerInput playerInput;
+    [SerializeField] private AudioListener audioListener;
+
     public PlayerController Controller { get; private set; }
     public PlayerCondition Condition { get; private set; }
     public InputHandler InputHandler { get; private set; }
     public Interaction Interaction { get; private set; }
     public Scanner Scanner { get; private set; }
+    public Camera PlayerCamera => playerCamera;
 
     // 컴포넌트 캐싱은 Awake로 (초기화 오류 방지)
     private void Awake()
@@ -36,6 +42,10 @@ public class Player:NetworkBehaviour // 2. NetworkBehaviour 상속
     public override void OnStartLocalPlayer()
     {
         base.OnStartLocalPlayer();
+
+        if(playerCamera != null) playerCamera.gameObject.SetActive(true);
+        if(playerInput != null) playerInput.enabled = true;
+        if(audioListener != null) audioListener.enabled = true;
 
         // 남의 캐릭터가 내 키보드를 먹거나, 내 화면에 스캐너를 띄우면 안 됨!
         // 따라서 입력, 스캐너, 조작 관련 초기화는 '내 캐릭터(로컬)'일 때만 켜줌

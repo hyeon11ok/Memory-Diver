@@ -4,7 +4,6 @@ using UnityEngine;
 public class Interaction :NetworkBehaviour
 {
     private Player player;
-    private Camera _camera;
 
     // 레이 캐스트 관련 변수
     [SerializeField] private float checkRate = 0.05f;
@@ -18,7 +17,6 @@ public class Interaction :NetworkBehaviour
     public void Init(Player player)
     {
         this.player = player;
-        _camera = Camera.main;
     }
 
     // Update is called once per frame
@@ -30,7 +28,7 @@ public class Interaction :NetworkBehaviour
         {
             lastCheckTime = Time.time;
 
-            Ray ray = _camera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
+            Ray ray = player.PlayerCamera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
             RaycastHit hit; //레이에 맞은 물체를 저장하는 변수
 
             if(Physics.Raycast(ray, out hit, maxCheckDistance) &&
