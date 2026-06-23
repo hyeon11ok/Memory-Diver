@@ -105,4 +105,14 @@ public class Condition
     {
         return currentValue / maxValue;
     }
+
+    /// <summary>
+    /// 서버가 보내온 정확한 수치로 현재 값을 강제 동기화합니다.
+    /// </summary>
+    public void SetValue(float value)
+    {
+        currentValue = value;
+        if(currentValue > maxValue) currentValue = maxValue;
+        else if(currentValue < 0) currentValue = 0;
+    }
 }

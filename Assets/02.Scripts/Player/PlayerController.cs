@@ -1,8 +1,8 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
+using Mirror;
 
 [RequireComponent(typeof(Rigidbody))]
-public class PlayerController : MonoBehaviour
+public class PlayerController :NetworkBehaviour
 {
     [Header("Move Setting")]
     [SerializeField] private int jumpPower = 5;
@@ -35,14 +35,26 @@ public class PlayerController : MonoBehaviour
         this.inputHandler = inputHandler;
         this.playerCondition = playerCondition;
         rb = GetComponent<Rigidbody>();
-        Cursor.lockState = CursorLockMode.Locked;
+
+        // 내 캐릭터일 때만 마우스 커서 잠금
+        if(isLocalPlayer)
+        {
+            Cursor.lockState = CursorLockMode.Locked;
+        }
+        else
+        {
+            // [최적화] 남의 캐릭터는 내 화면에서 물리 연산을 직접 할 필요가 없음 (NetworkTransform이 위치를 잡아줌)
+            rb.isKinematic = true;
+        }
     }
 
     private void FixedUpdate()
     {
+        if(!isLocalPlayer) return; // 내 캐릭터가 아니면 연산 중지
+
         Move();
 
-        if(inputHandler.IsJump) 
+        if(inputHandler.IsJump)
         {
             Jump();
             inputHandler.ResetJump();
@@ -51,6 +63,8 @@ public class PlayerController : MonoBehaviour
 
     private void LateUpdate()
     {
+        if(!isLocalPlayer) return; // 내 캐릭터가 아니면 시점 변경 중지
+
         if(canLook)
         {
             CameraLook();

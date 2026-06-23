@@ -1,7 +1,7 @@
-using TMPro;
+using Mirror;
 using UnityEngine;
 
-public class Interaction : MonoBehaviour
+public class Interaction :NetworkBehaviour
 {
     private Player player;
     private Camera _camera;
@@ -24,6 +24,8 @@ public class Interaction : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(!isLocalPlayer) return; // 레이캐스트 낭비 방지 & 로컬 UI만 띄우기 위함
+
         if(Time.time - lastCheckTime > checkRate)
         {
             lastCheckTime = Time.time;
@@ -55,12 +57,26 @@ public class Interaction : MonoBehaviour
 
     public void Interact()
     {
-        if(curInteractable != null)
+        if(!isLocalPlayer) return;
+
+        // 클라이언트가 상호작용 키를 누르면, 로컬에서 실행하지 않고 서버로 요청함!
+        if(curInteractable != null && curInteractGameObject != null)
         {
-            if(curInteractable is Object unityObject && unityObject != null)
-            {
-                curInteractable.OnInteract(player);
-            }
+            CmdInteract(curInteractGameObject);
+        }
+    }
+
+    // 서버에서 실행되는 함수 (접두어 Cmd 필수)
+    [Command]
+    private void CmdInteract(GameObject targetObj)
+    {
+        // 서버 측에서 해당 오브젝트가 상호작용 가능한지 한 번 더 검증 (보안)
+        if(targetObj != null && targetObj.TryGetComponent<IInteractable>(out IInteractable interactable))
+        {
+            interactable.OnInteract(player);
+            // 주의: IInteractable 인터페이스의 OnInteract 로직 내부에서 
+            // 오브젝트 삭제(Destroy)나 상태 변경이 일어난다면, 
+            // 반드시 NetworkServer.Destroy() 나 [ClientRpc]를 사용하도록 해당 인터페이스 구현부도 수정해야 함!
         }
     }
 }

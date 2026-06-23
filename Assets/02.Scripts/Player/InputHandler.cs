@@ -1,10 +1,11 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Mirror;
 
 /// <summary>
 /// 플레이어 입력을 처리하는 클래스입니다. 이동, 점프, 마우스 입력을 관리합니다.
 /// </summary>
-public class InputHandler:MonoBehaviour
+public class InputHandler:NetworkBehaviour
 {
     Player player;
 
@@ -26,24 +27,22 @@ public class InputHandler:MonoBehaviour
 
     private void Update()
     {
-        if(jumpInputDelay.IsActive())
-        {
-            jumpInputDelay.Update(); // 점프 입력 버퍼 타이머 업데이트
-        }
+        if(!isLocalPlayer) return; // 타이머 연산은 로컬에서만
 
-        if(scanningInputDelay.IsActive())
-        {
-            scanningInputDelay.Update(); // 스캐닝 입력 버퍼 타이머 업데이트
-        }
+        if(jumpInputDelay.IsActive()) jumpInputDelay.Update();
+        if(scanningInputDelay.IsActive()) scanningInputDelay.Update();
     }
 
     public void OnLookInput(InputAction.CallbackContext context) // 마우스 입력 처리
     {
+        if(!isLocalPlayer) return; // 남의 입력 콜백 무시
         MouseDelta = context.ReadValue<Vector2>();
     }
 
     public void OnMoveInput(InputAction.CallbackContext context)  // 이동(wasd) 입력 처리
     {
+        if(!isLocalPlayer) return;
+
         if(context.phase == InputActionPhase.Performed)
         {
             CurMoveInput = context.ReadValue<Vector2>();
@@ -56,6 +55,8 @@ public class InputHandler:MonoBehaviour
 
     public void OnSprintInput(InputAction.CallbackContext context) // 달리기(shift) 입력 처리
     {
+        if(!isLocalPlayer) return;
+
         if(context.phase == InputActionPhase.Performed)
         {
             IsSprint = true;
@@ -68,6 +69,8 @@ public class InputHandler:MonoBehaviour
 
     public void OnJumpInput(InputAction.CallbackContext context) // 점프(space) 입력 처리
     {
+        if(!isLocalPlayer) return;
+
         if(jumpInputDelay.IsActive())
             return; // 점프 입력 버퍼가 활성화되어 있으면 추가 점프 입력을 무시합니다.
         
@@ -105,6 +108,8 @@ public class InputHandler:MonoBehaviour
 
     public void OnInteractInput(InputAction.CallbackContext context)
     {
+        if(!isLocalPlayer) return;
+
         if(context.phase == InputActionPhase.Started)
         {
             player.Interaction.Interact();
@@ -113,6 +118,8 @@ public class InputHandler:MonoBehaviour
 
     public void OnScanningInput(InputAction.CallbackContext context)
     {
+        if(!isLocalPlayer) return;
+
         if(scanningInputDelay.IsActive())
             return; // 스캐닝 입력 버퍼가 활성화되어 있으면 상호작용 입력을 무시합니다.
 

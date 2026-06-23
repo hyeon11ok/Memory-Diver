@@ -19,6 +19,8 @@ GameObject:
   - component: {fileID: 705763201873326231}
   - component: {fileID: 3509615821372562939}
   - component: {fileID: 8117740822375407462}
+  - component: {fileID: 2241372753573825091}
+  - component: {fileID: 125139141766949056}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -54,6 +56,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c1a5d119308257478b0746a43e8f2ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Player
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
 --- !u!114 &1943109267510854445
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -66,6 +71,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9a86d5e85680e9441aed35ef5552cdd3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   jumpPower: 5
   moveSpeed: 5
   sprintMultiplier: 1.5
@@ -109,6 +117,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8e131e02369ef1d4287fbcc398ecd25f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InputHandler
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   groundLayerMask:
     serializedVersion: 2
     m_Bits: 64
@@ -128,11 +139,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e021c75633ef7a94f82459ee2e2f66c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Interaction
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   checkRate: 0.05
   maxCheckDistance: 5
-  layerMask:
-    serializedVersion: 2
-    m_Bits: 256
 --- !u!114 &1466953368046686282
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -145,6 +156,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4e1da6948c03be447a45f23cbd2397d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerPositionProvider
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   detectionRadius: 5
   softness: 2
 --- !u!54 &3868945290506237087
@@ -379,11 +393,65 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1b27cc54bfdf6dc4d869da504a75e761, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemScanner
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   scanRadius: 10
   scanTime: 0.5
-  itemLayerMask:
+  scanLayerMask:
     serializedVersion: 2
     m_Bits: 256
+--- !u!114 &2241372753573825091
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2836050497762675492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+  sceneId: 0
+  _assetId: 2293518875
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
+--- !u!114 &125139141766949056
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2836050497762675492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a553cb17010b2403e8523b558bffbc14, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror.Components::Mirror.NetworkTransformUnreliable
+  syncDirection: 1
+  syncMode: 0
+  syncInterval: 0
+  target: {fileID: 6740825226504483572}
+  syncPosition: 1
+  syncRotation: 1
+  syncScale: 0
+  onlySyncOnChange: 1
+  compressRotation: 1
+  interpolatePosition: 1
+  interpolateRotation: 1
+  interpolateScale: 1
+  coordinateSpace: 0
+  timelineOffset: 1
+  showGizmos: 0
+  showOverlay: 0
+  overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
+  bufferResetMultiplier: 3
+  useFixedUpdate: 0
+  positionSensitivity: 0.01
+  rotationSensitivity: 0.01
+  scaleSensitivity: 0.01
 --- !u!1 &8712146410721670019
 GameObject:
   m_ObjectHideFlags: 0

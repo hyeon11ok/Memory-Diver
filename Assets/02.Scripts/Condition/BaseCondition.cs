@@ -1,8 +1,9 @@
+using Mirror;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class BaseCondition:MonoBehaviour, IDamagable
+public abstract class BaseCondition:NetworkBehaviour, IDamagable
 {
     [SerializeField] protected List<Condition> conditions;
     protected Condition[] passiveConditions; // 자동 회복/감소가 실행될 컨디션
@@ -45,19 +46,48 @@ public abstract class BaseCondition:MonoBehaviour, IDamagable
     /// <param name="damage"></param>
     public virtual void OnHit(float damage)
     {
+        // 서버라면 바로 데미지를 적용, 클라이언트라면 서버에 데미지를 입었다고 요청
+        if(isServer)
+        {
+            ApplyDamage(damage);
+        }
+        else
+        {
+            CmdTakeDamage(damage);
+        }
+    }
+
+    // 서버에게 데미지 계산을 요청 (requiresAuthority = false로 설정해야 적/남이 나를 때릴 수 있음)
+    [Command(requiresAuthority = false)]
+    private void CmdTakeDamage(float damage)
+    {
+        ApplyDamage(damage);
+    }
+
+    // 오직 서버에서만 실행되는 진짜 데미지 계산 로직
+    [Server]
+    private void ApplyDamage(float damage)
+    {
         try
         {
             GetCondition(ConditionType.Health).Decrease(damage);
+
+            // 데미지를 깎은 후, 모든 유저들의 화면에 변경된 체력을 방송함!
+            RpcSyncCondition(ConditionType.Health, GetCondition(ConditionType.Health).CurrentValue);
         }
         catch(NullReferenceException e)
         {
             Debug.LogError($"ConditionType.Health가 설정되지 않았습니다: {e.Message}");
         }
 
-        if(IsDead())
-        {
-            Die();
-        }
+        if(IsDead()) Die();
+    }
+
+    // 서버가 모든 클라이언트에게 상태 수치를 강제로 맞춰주는 함수
+    [ClientRpc]
+    public void RpcSyncCondition(ConditionType type, float newValue)
+    {
+        GetCondition(type).SetValue(newValue);
     }
 
     /// <summary>

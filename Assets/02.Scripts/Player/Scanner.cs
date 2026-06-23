@@ -1,7 +1,8 @@
+using Mirror;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Scanner : MonoBehaviour
+public class Scanner :NetworkBehaviour
 {
     [SerializeField] private float scanRadius = 10f;
     [SerializeField] private float scanTime = 0.5f;
@@ -25,6 +26,8 @@ public class Scanner : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if(!isLocalPlayer) return;
+
         if(isScanning)
         {
             curRadius += (scanRadius / scanTime) * Time.deltaTime;
