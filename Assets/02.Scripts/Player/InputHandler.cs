@@ -43,6 +43,8 @@ public class InputHandler:NetworkBehaviour
     {
         if(!isLocalPlayer) return;
 
+        Debug.Log("Move Input: " + context.ReadValue<Vector2>() + " Phase: " + context.phase);
+
         if(context.phase == InputActionPhase.Performed)
         {
             CurMoveInput = context.ReadValue<Vector2>();
