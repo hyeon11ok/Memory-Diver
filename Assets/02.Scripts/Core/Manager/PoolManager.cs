@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+using Mirror;
 
 public class PoolManager : Singleton<PoolManager>
 {
@@ -40,5 +41,34 @@ public class PoolManager : Singleton<PoolManager>
 
         pools.Add(key, newPool);
         return newPool;
+    }
+
+    /// <summary>
+    /// NetworkIdentity가 붙은 프리팹을 Mirror의 Spawn 시스템과 PoolManager에 연동합니다.
+    /// 게임 시작 시(NetworkManager의 Start 등) 미리 호출해두어야 합니다.
+    /// </summary>
+    public void RegisterNetworkPool<T>(T prefab, int defaultCapacity = 20, int maxSize = 100) where T : NetworkBehaviour
+    {
+        // 1. 일반 풀 생성
+        IObjectPool<T> pool = GetOrCreatePool(prefab, defaultCapacity, maxSize);
+
+        // 2. 미러의 Spawn을 가로채서 풀에서 꺼내주도록 설정 (Handler 등록)
+        NetworkClient.RegisterPrefab(prefab.gameObject,
+            spawnHandler: (SpawnMessage msg) =>
+            {
+                // 서버가 Spawn하라고 명령하면 새로 생성하지 않고 풀에서 꺼냄
+                T obj = pool.Get();
+                return obj.gameObject;
+            },
+            unspawnHandler: (GameObject spawned) =>
+            {
+                // 서버가 UnSpawn하라고 명령하면 파괴하지 않고 풀로 돌려보냄
+                T obj = spawned.GetComponent<T>();
+                if(obj != null)
+                {
+                    pool.Release(obj);
+                }
+            }
+        );
     }
 }
