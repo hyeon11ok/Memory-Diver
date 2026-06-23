@@ -1,0 +1,78 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5513625986265982067
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 815736230175334024}
+  - component: {fileID: 7512790854027245245}
+  - component: {fileID: 3841311624755145901}
+  m_Layer: 0
+  m_Name: MapGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &815736230175334024
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5513625986265982067}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7512790854027245245
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5513625986265982067}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 908e1946cf3d04241bea35f79bcddf3e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapGenerator
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  startRoomPrefab: {fileID: 4154526049163943564, guid: ed4f48006caf979409aa9486aff1859e, type: 3}
+  roomPrefabs:
+  - {fileID: 8772673286915824322, guid: 590d3c662045dd642803ac8b106cc37c, type: 3}
+  - {fileID: 8322358954945808185, guid: dc907fc092ef0084ba5724180192b650, type: 3}
+  - {fileID: 8209552472413341484, guid: ac80c16f485166f4588c7266d593a8f1, type: 3}
+  - {fileID: 1548196455060685995, guid: d4863dcb4b158ab4bb26181f48b3ff51, type: 3}
+  - {fileID: 1157829504427890898, guid: 52bf2cb77796ec04a843ee283f16fd2e, type: 3}
+  maxRooms: 10
+  roomLayer:
+    serializedVersion: 2
+    m_Bits: 512
+--- !u!114 &3841311624755145901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5513625986265982067}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+  sceneId: 0
+  _assetId: 225291651
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
