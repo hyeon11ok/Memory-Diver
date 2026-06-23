@@ -44,7 +44,7 @@ public class Singleton<T> : MonoBehaviour where T : Singleton<T>
         }
     }
 
-    private void Awake()
+    protected virtual void Awake()
     {
         if(instance == null)
         {
