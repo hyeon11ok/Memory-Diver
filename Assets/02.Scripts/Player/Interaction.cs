@@ -51,6 +51,11 @@ public class Interaction :NetworkBehaviour
                 }
             }
         }
+
+        if(player.InputHandler.IsInteract)
+        {
+            Interact();
+        }
     }
 
     public void Interact()

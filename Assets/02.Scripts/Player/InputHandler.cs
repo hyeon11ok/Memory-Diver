@@ -14,6 +14,7 @@ public class InputHandler:NetworkBehaviour
     public Vector2 MouseDelta { get; private set; }  // 마우스 변화값
     public bool IsJump { get; private set; } = false;
     public bool IsSprint { get; private set; } = false;
+    public bool IsInteract { get; private set; } = false;
 
     [Space(10)]
     [Header("Input Delay")]
@@ -114,7 +115,11 @@ public class InputHandler:NetworkBehaviour
 
         if(context.phase == InputActionPhase.Started)
         {
-            player.Interaction.Interact();
+            IsInteract = true;
+        }
+        else if(context.phase == InputActionPhase.Canceled)
+        {
+            IsInteract = false;
         }
     }
 
