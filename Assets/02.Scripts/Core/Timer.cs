@@ -2,24 +2,28 @@ using System;
 using UnityEngine;
 
 [Serializable]
-public class InputDelay
+public class Timer
 {
-    [SerializeField] private float delayTime; // 버퍼 시간
+    [SerializeField] private float time; // 버퍼 시간
     private float timer; // 타이머
-    public InputDelay(float delayTime)
+
+    public float TimeValue => time;
+    public float TimerValue => timer;
+
+    public Timer(float time)
     {
-        this.delayTime = delayTime;
+        this.time = time;
         this.timer = 0;
     }
     public void Activate() // 입력 버퍼 활성화
     {
-        timer = delayTime;
+        timer = 0;
     }
     public void Update() // 타이머 업데이트
     {
-        if(timer > 0f)
+        if(timer < time)
         {
-            timer -= Time.deltaTime;
+            timer += Time.deltaTime;
         }
     }
     /// <summary>
@@ -29,6 +33,6 @@ public class InputDelay
     /// <returns></returns>
     public bool IsActive() // 입력 버퍼 활성 여부 확인
     {
-        return timer > 0f;
+        return timer < time;
     }
 }

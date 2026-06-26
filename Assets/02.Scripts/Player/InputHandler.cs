@@ -15,11 +15,12 @@ public class InputHandler:NetworkBehaviour
     public bool IsJump { get; private set; } = false;
     public bool IsSprint { get; private set; } = false;
     public bool IsInteract { get; private set; } = false;
+    private bool usableInteractToggle = true; // 단발성 상호작용 사용 가능 여부 플래그
 
     [Space(10)]
     [Header("Input Delay")]
-    [SerializeField] private InputDelay jumpInputDelay;
-    [SerializeField] private InputDelay scanningInputDelay;
+    [SerializeField] private Timer jumpInputDelay;
+    [SerializeField] private Timer scanningInputDelay;
 
     public void Init(Player player)
     {
@@ -43,8 +44,6 @@ public class InputHandler:NetworkBehaviour
     public void OnMoveInput(InputAction.CallbackContext context)  // 이동(wasd) 입력 처리
     {
         if(!isLocalPlayer) return;
-
-        Debug.Log("Move Input: " + context.ReadValue<Vector2>() + " Phase: " + context.phase);
 
         if(context.phase == InputActionPhase.Performed)
         {
@@ -116,11 +115,27 @@ public class InputHandler:NetworkBehaviour
         if(context.phase == InputActionPhase.Started)
         {
             IsInteract = true;
+            usableInteractToggle = true;
         }
         else if(context.phase == InputActionPhase.Canceled)
         {
             IsInteract = false;
+            usableInteractToggle = false;
         }
+    }
+
+    /// <summary>
+    /// 현재 기본 상호작용은 홀딩 방식이므로, 단발성 상호작용을 위해 이 함수를 사용합니다.
+    /// </summary>
+    /// <returns></returns>
+    public bool UseInteractToggle()
+    {
+        if(usableInteractToggle)
+        {
+            usableInteractToggle = false;
+            return true;
+        }
+        return false;
     }
 
     public void OnScanningInput(InputAction.CallbackContext context)
