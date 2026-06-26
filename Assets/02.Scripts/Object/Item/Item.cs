@@ -21,29 +21,10 @@ public abstract class Item :NetworkBehaviour, IInteractable, IScannable
 
     private IObjectPool<EchoEffect> echoEffectPool;
 
-    // 홀드형 상호작용 종료지점 체크를 위한 변수
-    // 상호작용 메서드 안에서 시간을 증가, 증가한 시간을 별도의 변수에 저장
-    // Update에서 두 시간 변수를 비교하여 차이가 없으면 상호작용이 종료되었다고 판단
-    protected bool isIntercation = false; // 현재 상호작용 기능 실행 중인지 체크
-    protected float interactTimer = 0; // 상호작용 지속시간
-    protected float preInteactTimer = 0; // 시간 비교를 
-
 
     protected virtual void Start()
     {
         echoEffectPool = PoolManager.Instance.GetOrCreatePool(echoEffect, 20, 50);
-    }
-
-    protected virtual void Update()
-    {
-        // 상호작용 중이라는 플래그가 있지만 현재와 이전 타이머의 시간이 같다면 상호작용이 종료된 것
-        if(isIntercation && interactTimer == preInteactTimer)
-        {
-            isIntercation = false;
-            interactTimer = 0;
-            preInteactTimer = 0;
-            EndInteract();
-        }
     }
 
     public virtual string GetInteractPrompt()
@@ -51,17 +32,11 @@ public abstract class Item :NetworkBehaviour, IInteractable, IScannable
         return "<" + itemName + ">\n" + "<" + interactPrompt + ">";
     }
 
-    // 주의: 이 함수는 Interaction.cs의 [Command]를 통해 "서버"에서 실행될 확률이 높습니다!
-    // 따라서 아이템을 줍고 파괴하는 로직은 이 안에서 NetworkServer.Destroy(gameObject); 로 처리해야 합니다.
-    public virtual void OnInteract(Player player)
-    {
+    // 상호작용 키를 '눌렀을 때' 서버에서 딱 1번 실행됨
+    public virtual void OnInteractStart(Player player) { }
 
-    }
-
-    protected virtual void EndInteract()
-    {
-
-    }
+    // 상호작용 키를 '뗐을 때' 서버에서 딱 1번 실행됨
+    public virtual void OnInteractCancel(Player player) { }
 
     public void ScanReflectEffect()
     {

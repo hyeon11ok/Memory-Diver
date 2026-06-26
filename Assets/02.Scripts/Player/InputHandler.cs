@@ -14,8 +14,6 @@ public class InputHandler:NetworkBehaviour
     public Vector2 MouseDelta { get; private set; }  // 마우스 변화값
     public bool IsJump { get; private set; } = false;
     public bool IsSprint { get; private set; } = false;
-    public bool IsInteract { get; private set; } = false;
-    private bool usableInteractToggle = true; // 단발성 상호작용 사용 가능 여부 플래그
 
     [Space(10)]
     [Header("Input Delay")]
@@ -112,30 +110,16 @@ public class InputHandler:NetworkBehaviour
     {
         if(!isLocalPlayer) return;
 
+        // 키를 "누르기 시작한 순간" 딱 한 번 호출
         if(context.phase == InputActionPhase.Started)
         {
-            IsInteract = true;
-            usableInteractToggle = true;
+            player.Interaction.InteractStart();
         }
+        // 키를 "뗀 순간" 딱 한 번 호출
         else if(context.phase == InputActionPhase.Canceled)
         {
-            IsInteract = false;
-            usableInteractToggle = false;
+            player.Interaction.InteractCancel();
         }
-    }
-
-    /// <summary>
-    /// 현재 기본 상호작용은 홀딩 방식이므로, 단발성 상호작용을 위해 이 함수를 사용합니다.
-    /// </summary>
-    /// <returns></returns>
-    public bool UseInteractToggle()
-    {
-        if(usableInteractToggle)
-        {
-            usableInteractToggle = false;
-            return true;
-        }
-        return false;
     }
 
     public void OnScanningInput(InputAction.CallbackContext context)

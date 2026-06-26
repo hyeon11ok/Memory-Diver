@@ -9,79 +9,113 @@ using UnityEngine;
 /// </summary>
 public class MemoryItem : Item
 {
-    [SerializeField] private Timer downloadTimer; // 아이템을 획득(다운로드)하는데 걸리는 시간을 체크하는 타이머
-    private float downloadReward; // 다운로드 완료 시 플레이어에게 주는 보상량
-    private float downloadProgress = 0; // 다운로드 진행률
+    [SerializeField] private float downloadTime = 3f; // 필요 시간
+    private float downloadReward; // 보상량
 
-    // 다운로드 효과를 그려낼 머티리얼
-    private Material downloadmaterial;
+    // 1. 상태 변수 (서버에서 변경 시 클라이언트들의 셰이더 조작 함수(Hook)를 자동 실행)
+    [SyncVar(hook = nameof(OnDownloadingStateChanged))]
+    private bool isDownloading = false;
 
-    // 다운로드 머티리얼을 적용/해제 하기 위한 변수
+    // 2. 진행률 퍼센트 (클라이언트들의 셰이더 업데이트용)
+    [SyncVar]
+    private float downloadProgress = 0f;
+
+    // --- 비주얼 렌더링 관련 변수 (클라이언트 전용) ---
+    private Material downloadMaterial;
     private MeshRenderer MemoryRenderer;
     private Material[] originalMaterials;
-    List<Material> modifiedMaterials = new List<Material>();
-
-    // 다운로드 효과 조절을 위한 변수
-    private float minY;
-    private float maxY;
+    private List<Material> modifiedMaterials = new List<Material>();
+    private float minY, maxY;
 
     protected override void Start()
     {
         base.Start();
-        // 오브젝트의 초기 머티리얼 저장
-        MemoryRenderer = GetComponent<MeshRenderer>();
-        originalMaterials = MemoryRenderer.materials;
 
-        // 다운로드 머티리얼을 추가하여 modifiedMaterials 리스트에 저장
-        downloadmaterial = Resources.Load<Material>("Materials/MemoryDownload");
-        modifiedMaterials.AddRange(originalMaterials);
-        modifiedMaterials.Add(downloadmaterial);
+        if(isClient)
+        {
+            MemoryRenderer = GetComponent<MeshRenderer>();
+            originalMaterials = MemoryRenderer.materials;
 
-        // 다운로드 머티리얼 초기화를 위한 Y 최대/최소값 계산
-        Collider collider = GetComponent<Collider>();
-        float centerY = collider.bounds.center.y - transform.position.y;
-        float sizeY = collider.bounds.size.y;
-        minY = centerY - sizeY / 2;
-        maxY = centerY + sizeY / 2;
+            downloadMaterial = Resources.Load<Material>("Materials/MemoryDownload");
+            modifiedMaterials.AddRange(originalMaterials);
+            modifiedMaterials.Add(downloadMaterial);
+
+            Collider collider = GetComponent<Collider>();
+            float centerY = collider.bounds.center.y - transform.position.y;
+            float sizeY = collider.bounds.size.y;
+            minY = centerY - sizeY / 2;
+            maxY = centerY + sizeY / 2;
+        }
     }
 
-    public void InitMemoryItem(float reward)
+    // ====================================================================
+    // [서버 영역] 키를 누르거나 뗐을 때 호출됨 (CmdInteractStart / Cancel을 통해)
+    // ====================================================================
+
+    public override void OnInteractStart(Player player)
     {
-        downloadReward = reward;
+        if(!isServer) return;
+        isDownloading = true; // SyncVar 변경 -> 모든 유저의 화면에 다운로드 연출 시작
     }
 
-    public override void OnInteract(Player player)
+    public override void OnInteractCancel(Player player)
     {
-        if(player.InputHandler.UseInteractToggle()) // 다운로드 시작 시점
-        {
-            isIntercation = true;
-            downloadTimer.Activate(); // 타이머 세팅
+        if(!isServer) return;
+        isDownloading = false; // SyncVar 변경 -> 모든 유저의 화면에서 다운로드 연출 중단
+    }
 
-            MemoryRenderer.materials = modifiedMaterials.ToArray(); // 다운로드 머티리얼 적용
-            downloadmaterial.SetFloat("_MinY", minY);
-            downloadmaterial.SetFloat("_MaxY", maxY);
+    [ServerCallback]
+    private void Update()
+    {
+        // 오직 서버만이 매 프레임 실제 다운로드 시간을 계산합니다 (네트워크 통신 없음)
+        if(isDownloading)
+        {
+            downloadProgress += Time.deltaTime / downloadTime;
+
+            if(downloadProgress >= 1f)
+            {
+                GiveRewardAndDestroy();
+            }
         }
-
-        if(downloadTimer.IsActive()) // 다운로드 중
+        else
         {
-            downloadTimer.Update(); // 타이머 업데이트
-            downloadProgress = downloadTimer.TimerValue / downloadTimer.TimeValue; // 진행률 계산
-            downloadmaterial.SetFloat("_Percent", downloadProgress);
-
-            preInteactTimer = interactTimer;
-            interactTimer += Time.deltaTime;
+            downloadProgress = 0f; // 키를 떼면 진행도 초기화
         }
-        else // 다운로드 완료
+    }
+
+    [Server]
+    private void GiveRewardAndDestroy()
+    {
+        isDownloading = false;
+        NetworkServer.Destroy(gameObject);
+    }
+
+    // ====================================================================
+    // [클라이언트 영역] 서버의 SyncVar 상태를 넘겨받아 내 화면의 셰이더만 조작
+    // ====================================================================
+
+    private void OnDownloadingStateChanged(bool oldVal, bool newVal)
+    {
+        if(newVal == true) // 다운로드 시작
         {
-            // 다운로드 완료 시 플레이어에게 보상 지급
-            // 아이템 비활성화 등 다운로드 완료 후 기능 구현
+            MemoryRenderer.materials = modifiedMaterials.ToArray();
+            downloadMaterial.SetFloat("_MinY", minY);
+            downloadMaterial.SetFloat("_MaxY", maxY);
+            downloadMaterial.SetFloat("_Percent", 0);
+        }
+        else // 다운로드 중단
+        {
             MemoryRenderer.materials = originalMaterials;
         }
     }
 
-    protected override void EndInteract()
+    [ClientCallback]
+    private void LateUpdate()
     {
-        MemoryRenderer.materials = originalMaterials;
-        Debug.Log("다운로드 중단");
+        // 내 화면에서 이펙트가 켜져 있을 때 서버의 퍼센트를 셰이더에 덮어씌움
+        if(isDownloading && downloadMaterial != null)
+        {
+            downloadMaterial.SetFloat("_Percent", downloadProgress);
+        }
     }
 }

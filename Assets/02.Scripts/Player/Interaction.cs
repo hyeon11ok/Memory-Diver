@@ -51,35 +51,34 @@ public class Interaction :NetworkBehaviour
                 }
             }
         }
-
-        if(player.InputHandler.IsInteract)
-        {
-            Interact();
-        }
     }
 
-    public void Interact()
+    // InputHandler에서 호출됨
+    public void InteractStart()
     {
         if(!isLocalPlayer) return;
-
-        // 클라이언트가 상호작용 키를 누르면, 로컬에서 실행하지 않고 서버로 요청함!
         if(curInteractable != null && curInteractGameObject != null)
-        {
-            CmdInteract(curInteractGameObject);
-        }
+            CmdInteractStart(curInteractGameObject); // 서버로 상호작용 '시작'을 알림
     }
 
-    // 서버에서 실행되는 함수 (접두어 Cmd 필수)
-    [Command]
-    private void CmdInteract(GameObject targetObj)
+    public void InteractCancel()
     {
-        // 서버 측에서 해당 오브젝트가 상호작용 가능한지 한 번 더 검증 (보안)
+        if(!isLocalPlayer) return;
+        if(curInteractable != null && curInteractGameObject != null)
+            CmdInteractCancel(curInteractGameObject); // 서버로 상호작용 '중단'을 알림
+    }
+
+    [Command]
+    private void CmdInteractStart(GameObject targetObj)
+    {
         if(targetObj != null && targetObj.TryGetComponent<IInteractable>(out IInteractable interactable))
-        {
-            interactable.OnInteract(player);
-            // 주의: IInteractable 인터페이스의 OnInteract 로직 내부에서 
-            // 오브젝트 삭제(Destroy)나 상태 변경이 일어난다면, 
-            // 반드시 NetworkServer.Destroy() 나 [ClientRpc]를 사용하도록 해당 인터페이스 구현부도 수정해야 함!
-        }
+            interactable.OnInteractStart(player);
+    }
+
+    [Command]
+    private void CmdInteractCancel(GameObject targetObj)
+    {
+        if(targetObj != null && targetObj.TryGetComponent<IInteractable>(out IInteractable interactable))
+            interactable.OnInteractCancel(player);
     }
 }
