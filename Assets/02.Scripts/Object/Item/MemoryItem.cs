@@ -9,6 +9,8 @@ using UnityEngine;
 /// </summary>
 public class MemoryItem : Item
 {
+    private uint interactorNetId = 0;
+
     [SerializeField] private float downloadTime = 3f; // 필요 시간
     private float downloadReward; // 보상량
 
@@ -55,13 +57,19 @@ public class MemoryItem : Item
     public override void OnInteractStart(Player player)
     {
         if(!isServer) return;
+        if(interactorNetId != 0 && interactorNetId != player.netId) return;
+
         isDownloading = true; // SyncVar 변경 -> 모든 유저의 화면에 다운로드 연출 시작
+        interactorNetId = player.netId; 
     }
 
     public override void OnInteractCancel(Player player)
     {
         if(!isServer) return;
+        if(interactorNetId != 0 && interactorNetId != player.netId) return;
+
         isDownloading = false; // SyncVar 변경 -> 모든 유저의 화면에서 다운로드 연출 중단
+        interactorNetId = 0;
     }
 
     [ServerCallback]
@@ -87,7 +95,7 @@ public class MemoryItem : Item
     private void GiveRewardAndDestroy()
     {
         isDownloading = false;
-        NetworkServer.Destroy(gameObject);
+        NetworkServer.UnSpawn(gameObject);
     }
 
     // ====================================================================
