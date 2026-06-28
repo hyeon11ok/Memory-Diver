@@ -10,10 +10,12 @@ public class PlayerCondition:BaseCondition
         // 스태미나는 빠른 반응성을 위해 로컬에서만 깎음 (서버 통신 낭비 방지)
         if(!isLocalPlayer) return false;
 
-        if(conditionData.GetCondition(ConditionType.Stamina).CurrentValue < amount) return false;
+        if(conditionValues[ConditionType.Stamina] < amount) return false;
 
-        conditionData.GetCondition(ConditionType.Stamina).Decrease(amount);
-        conditionData.GetCondition(ConditionType.Stamina).SetPassiveDelay(0.5f);
+        conditionData.GetCondition(ConditionType.Stamina).Passivedelay = amount;
+        ClampCondition(ConditionType.Stamina);
+
+        conditionData.GetCondition(ConditionType.Stamina).Passivedelay = 0.5f;
         return true;
     }
 

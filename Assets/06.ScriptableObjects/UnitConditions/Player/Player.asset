@@ -16,10 +16,12 @@ MonoBehaviour:
   - authType: 1
     type: 1
     maxValue: 100
+    defaultValue: 100
     passiveValue: 0
     isPassive: 0
   - authType: 0
     type: 2
     maxValue: 100
+    defaultValue: 100
     passiveValue: 5
     isPassive: 1

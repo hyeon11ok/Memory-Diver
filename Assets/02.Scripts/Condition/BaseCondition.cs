@@ -5,12 +5,26 @@ using UnityEngine;
 
 public abstract class BaseCondition:NetworkBehaviour, IDamagable
 {
+    // 유닛의 사전 설정 된 컨디션 정보
     [SerializeField] protected ConditionData conditionData;
-    private float serverTickRate = 1f; // 서버 패시브는 1초마다 실행
+    // 실제로 사용 될 컨디션 값들
+    protected Dictionary<ConditionType, float> conditionValues = new Dictionary<ConditionType, float>();
+
+    private float serverTickRate = 0.2f; // 서버 패시브는 1초마다 실행
 
     public void Init()
     {
         conditionData.Init();
+        foreach(Condition condition in conditionData.Conditions)
+        {
+            conditionValues.Add(condition.Type, condition.DefaultValue);
+        }
+    }
+
+    protected void ClampCondition(ConditionType conditionType)
+    {
+        Condition c = conditionData.GetCondition(conditionType);
+        conditionValues[conditionType] = Mathf.Clamp(conditionValues[conditionType], 0, c.MaxValue);
     }
 
     public override void OnStartServer()
@@ -27,7 +41,7 @@ public abstract class BaseCondition:NetworkBehaviour, IDamagable
         {
             foreach(var condition in conditionData.PassiveConditions_local)
             {
-                condition.Passive(Time.deltaTime);
+                Passive(condition, Time.deltaTime);
             }
         }
     }
@@ -39,14 +53,27 @@ public abstract class BaseCondition:NetworkBehaviour, IDamagable
         foreach(var condition in conditionData.PassiveConditions_server)
         {
             // 1초마다 실행되므로 1f(serverTickRate)를 넘겨줍니다.
-            condition.Passive(serverTickRate);
+            Passive(condition, serverTickRate);
 
             // 값이 변했으니 접속한 모든 유저에게 변경된 수치를 1초에 딱 한 번만 쏴줍니다.
-            RpcSyncCondition(condition.Type, condition.CurrentValue);
+            RpcSyncCondition(condition.Type, conditionValues[condition.Type]);
         }
     }
 
+    /// <summary>
+    /// 지속적으로 값을 증가시키거나 감소시킵니다.
+    /// Update 메서드에서 호출되어야 합니다.
+    /// </summary>
+    public void Passive(Condition condition, float timeStep)
+    {
+        // 스테미너 사용 처럼 현재 증감되는 반대 방식으로 컨디션에 변화가 생겼을 때
+        // 자동 증감에 잠시 딜레이를 주기 위함
+        condition.Passivedelay -= timeStep;
+        if(condition.Passivedelay > 0) return;
 
+        conditionValues[condition.Type] += condition.PassiveValue * timeStep;
+        conditionValues[condition.Type] = Mathf.Clamp(conditionValues[condition.Type], 0f, condition.MaxValue);
+    }
 
     #region OnHit
     /// <summary>
@@ -79,10 +106,11 @@ public abstract class BaseCondition:NetworkBehaviour, IDamagable
     {
         try
         {
-            conditionData.GetCondition(ConditionType.Health).Decrease(damage);
+            conditionValues[ConditionType.Health] -= damage;
+            ClampCondition(ConditionType.Health);
 
             // 데미지를 깎은 후, 모든 유저들의 화면에 변경된 체력을 방송함!
-            RpcSyncCondition(ConditionType.Health, conditionData.GetCondition(ConditionType.Health).CurrentValue);
+            RpcSyncCondition(ConditionType.Health, conditionValues[ConditionType.Health]);
         }
         catch(NullReferenceException e)
         {
@@ -119,10 +147,11 @@ public abstract class BaseCondition:NetworkBehaviour, IDamagable
     {
         try
         {
-            conditionData.GetCondition(ConditionType.Health).Increase(amount);
+            conditionValues[ConditionType.Health] += amount;
+            ClampCondition(ConditionType.Health);
 
             // 데미지를 깎은 후, 모든 유저들의 화면에 변경된 체력을 방송함!
-            RpcSyncCondition(ConditionType.Health, conditionData.GetCondition(ConditionType.Health).CurrentValue);
+            RpcSyncCondition(ConditionType.Health, conditionValues[ConditionType.Health]);
         }
         catch(NullReferenceException e)
         {
@@ -135,7 +164,7 @@ public abstract class BaseCondition:NetworkBehaviour, IDamagable
     [ClientRpc]
     public void RpcSyncCondition(ConditionType type, float newValue)
     {
-        conditionData.GetCondition(type).SetValue(newValue);
+        conditionValues[type] = newValue;
     }
 
     /// <summary>
@@ -144,7 +173,7 @@ public abstract class BaseCondition:NetworkBehaviour, IDamagable
     /// <returns></returns>
     public bool IsDead()
     {
-        return conditionData.GetCondition(ConditionType.Health).CurrentValue <= 0;
+        return conditionValues[ConditionType.Health] <= 0;
     }
 
     /// <summary>

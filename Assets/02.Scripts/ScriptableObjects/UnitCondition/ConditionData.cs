@@ -17,7 +17,6 @@ public class ConditionData : ScriptableObject
         // 모든 Condition을 초기화합니다.
         foreach(var condition in conditions)
         {
-            condition.Init();
             if(condition.IsPassive){ 
                 if(condition.AuthType == ConditionAuth.Local)
                     passiveConditions_local.Add(condition);
