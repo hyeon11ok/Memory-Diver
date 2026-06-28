@@ -9,9 +9,12 @@ using UnityEngine;
 public class MemoryItem : Item
 {
     private uint interactorNetId = 0;
+    private Player interactPlayer;
 
+    [Space(10)]
+    [Header("기억 아이템 다운로드 관련 변수")]
     [SerializeField] private float downloadTime = 3f; // 필요 시간
-    private float downloadReward; // 보상량
+    [SerializeField] private float downloadReward; // 보상량
 
     // 1. 상태 변수 (서버에서 변경 시 클라이언트들의 셰이더 조작 함수(Hook)를 자동 실행)
     [SyncVar(hook = nameof(OnDownloadingStateChanged))]
@@ -58,6 +61,10 @@ public class MemoryItem : Item
         if(!isServer) return;
         if(interactorNetId != 0 && interactorNetId != player.netId) return;
 
+        // 아이템 다운로드 보상을 받을 용량이 부족하면 상호작용 불가능
+        if(player.Condition.GetCapacity() <= downloadReward) return;
+
+        interactPlayer = player;
         isDownloading = true; // SyncVar 변경 -> 모든 유저의 화면에 다운로드 연출 시작
         interactorNetId = player.netId; 
     }
@@ -67,6 +74,7 @@ public class MemoryItem : Item
         if(!isServer) return;
         if(interactorNetId != 0 && interactorNetId != player.netId) return;
 
+        interactPlayer = null;
         isDownloading = false; // SyncVar 변경 -> 모든 유저의 화면에서 다운로드 연출 중단
         interactorNetId = 0;
     }
@@ -94,6 +102,7 @@ public class MemoryItem : Item
     private void GiveRewardAndDestroy()
     {
         isDownloading = false;
+        interactPlayer.Condition.AddMemory(downloadReward);
         NetworkServer.UnSpawn(gameObject);
     }
 

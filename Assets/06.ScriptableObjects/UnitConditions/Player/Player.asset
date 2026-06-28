@@ -25,3 +25,9 @@ MonoBehaviour:
     defaultValue: 100
     passiveValue: 5
     isPassive: 1
+  - authType: 0
+    type: 3
+    maxValue: 100
+    defaultValue: 0
+    passiveValue: 0
+    isPassive: 0

@@ -9,6 +9,7 @@ public enum ConditionType
     None,
     Health,
     Stamina,
+    Memory
 }
 
 public enum ConditionAuth { Local, Server }

@@ -251,7 +251,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!135 &577232270
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -385,6 +385,7 @@ MonoBehaviour:
   echoEffectEndSize: 5
   echoEffectColor: {r: 0, g: 1, b: 0, a: 1}
   downloadTime: 3
+  downloadReward: 10
 --- !u!1 &1176431472
 GameObject:
   m_ObjectHideFlags: 0
