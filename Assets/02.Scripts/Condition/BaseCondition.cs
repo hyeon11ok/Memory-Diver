@@ -5,41 +5,50 @@ using UnityEngine;
 
 public abstract class BaseCondition:NetworkBehaviour, IDamagable
 {
-    [SerializeField] protected List<Condition> conditions;
-    protected Condition[] passiveConditions; // 자동 회복/감소가 실행될 컨디션
+    [SerializeField] protected ConditionData conditionData;
+    private float serverTickRate = 1f; // 서버 패시브는 1초마다 실행
 
-    public virtual void Init()
+    public void Init()
     {
-        // 모든 Condition을 초기화합니다.
-        foreach(var condition in conditions)
+        conditionData.Init();
+    }
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        // 서버 전용 패시브 틱 가동
+        InvokeRepeating(nameof(ServerPassiveTick), serverTickRate, serverTickRate);
+    }
+
+    private void Update()
+    {
+        // [로컬 전용 패시브] - 매 프레임 아주 부드럽게 실행 (스태미나 등)
+        if(isLocalPlayer)
         {
-            condition.Init();
+            foreach(var condition in conditionData.PassiveConditions_local)
+            {
+                condition.Passive(Time.deltaTime);
+            }
         }
-
-        // passiveConditions를 초기화합니다.
-        passiveConditions = GetPassiveConditions(true);
     }
 
-    /// <summary>
-    /// 지정된 타입과 일치하는 Condition을 반환합니다.
-    /// </summary>
-    /// <param name="conditionType">목표 타입</param>
-    /// <returns></returns>
-    public Condition GetCondition(ConditionType conditionType)
+    [Server]
+    private void ServerPassiveTick()
     {
-        return conditions.Find((x) => x.Type == conditionType);
+        // [서버 전용 패시브] - 1초(Tick)마다 한 번씩 뭉텅이로 실행 (체력 등)
+        foreach(var condition in conditionData.PassiveConditions_server)
+        {
+            // 1초마다 실행되므로 1f(serverTickRate)를 넘겨줍니다.
+            condition.Passive(serverTickRate);
+
+            // 값이 변했으니 접속한 모든 유저에게 변경된 수치를 1초에 딱 한 번만 쏴줍니다.
+            RpcSyncCondition(condition.Type, condition.CurrentValue);
+        }
     }
 
-    /// <summary>
-    /// 지정된 passive 여부와 일치하는 Condition들을 반환합니다.
-    /// </summary>
-    /// <param name="isPassive">passive 여부</param>
-    /// <returns></returns>
-    public Condition[] GetPassiveConditions(bool isPassive)
-    {
-        return conditions.FindAll((x) => x.IsPassive == isPassive).ToArray();
-    }
 
+
+    #region OnHit
     /// <summary>
     /// 피격 시 호출되는 메서드입니다. damage만큼 체력을 감소시키고, 체력이 0 이하가 되면 Die() 메서드를 호출합니다.
     /// </summary>
@@ -70,10 +79,10 @@ public abstract class BaseCondition:NetworkBehaviour, IDamagable
     {
         try
         {
-            GetCondition(ConditionType.Health).Decrease(damage);
+            conditionData.GetCondition(ConditionType.Health).Decrease(damage);
 
             // 데미지를 깎은 후, 모든 유저들의 화면에 변경된 체력을 방송함!
-            RpcSyncCondition(ConditionType.Health, GetCondition(ConditionType.Health).CurrentValue);
+            RpcSyncCondition(ConditionType.Health, conditionData.GetCondition(ConditionType.Health).CurrentValue);
         }
         catch(NullReferenceException e)
         {
@@ -82,12 +91,51 @@ public abstract class BaseCondition:NetworkBehaviour, IDamagable
 
         if(IsDead()) Die();
     }
+    #endregion
+
+    #region Heal
+    public void Heal(float amount)
+    {
+        if(isServer)
+        {
+            ApplyHeal(amount);
+        }
+        else
+        {
+            CmdTakeDHeal(amount);
+        }
+    }
+
+    // 서버에게 데미지 계산을 요청 (requiresAuthority = false로 설정해야 적/남이 나를 때릴 수 있음)
+    [Command(requiresAuthority = false)]
+    private void CmdTakeDHeal(float amount)
+    {
+        ApplyDamage(amount);
+    }
+
+    // 오직 서버에서만 실행되는 진짜 데미지 계산 로직
+    [Server]
+    private void ApplyHeal(float amount)
+    {
+        try
+        {
+            conditionData.GetCondition(ConditionType.Health).Increase(amount);
+
+            // 데미지를 깎은 후, 모든 유저들의 화면에 변경된 체력을 방송함!
+            RpcSyncCondition(ConditionType.Health, conditionData.GetCondition(ConditionType.Health).CurrentValue);
+        }
+        catch(NullReferenceException e)
+        {
+            Debug.LogError($"ConditionType.Health가 설정되지 않았습니다: {e.Message}");
+        }
+    }
+    #endregion
 
     // 서버가 모든 클라이언트에게 상태 수치를 강제로 맞춰주는 함수
     [ClientRpc]
     public void RpcSyncCondition(ConditionType type, float newValue)
     {
-        GetCondition(type).SetValue(newValue);
+        conditionData.GetCondition(type).SetValue(newValue);
     }
 
     /// <summary>
@@ -96,7 +144,7 @@ public abstract class BaseCondition:NetworkBehaviour, IDamagable
     /// <returns></returns>
     public bool IsDead()
     {
-        return GetCondition(ConditionType.Health).CurrentValue <= 0;
+        return conditionData.GetCondition(ConditionType.Health).CurrentValue <= 0;
     }
 
     /// <summary>

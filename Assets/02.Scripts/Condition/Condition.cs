@@ -11,12 +11,15 @@ public enum ConditionType
     Stamina,
 }
 
+public enum ConditionAuth { Local, Server }
+
 /// <summary>
 /// Condition 클래스는 게임에서 사용되는 다양한 상태(체력, 스태미나 등)를 나타냅니다.
 /// </summary>
 [Serializable]
 public class Condition
 {
+    [SerializeField] private ConditionAuth authType;
     [SerializeField] private ConditionType type;
     [SerializeField] private float maxValue;
     private float currentValue; // 현재 값
@@ -24,11 +27,12 @@ public class Condition
     [SerializeField] private bool isPassive; // 자동 회복/감소 여부
     private float passivedelay = 0;
 
-    public ConditionType Type { get => type; }
-    public float MaxValue { get => maxValue; }
-    public float CurrentValue { get => currentValue; }
-    public float PassiveValue { get => passiveValue; }
-    public bool IsPassive { get => isPassive; }
+    public ConditionAuth AuthType => authType;
+    public ConditionType Type => type;
+    public float MaxValue => maxValue;
+    public float CurrentValue => currentValue;
+    public float PassiveValue => passiveValue;
+    public bool IsPassive => isPassive;
 
     /// <summary>
     /// Condition 초기화 메서드입니다.
@@ -53,15 +57,15 @@ public class Condition
     /// 지속적으로 값을 증가시키거나 감소시킵니다.
     /// Update 메서드에서 호출되어야 합니다.
     /// </summary>
-    public void Passive()
+    public void Passive(float timeStep)
     {
         // 스테미너 사용 처럼 현재 증감되는 반대 방식으로 컨디션에 변화가 생겼을 때
         // 자동 증감에 잠시 딜레이를 주기 위함
-        passivedelay -= Time.deltaTime;
+        passivedelay -= timeStep;
         if(passivedelay > 0) return;
         else if(passivedelay < 0) passivedelay = 0;
 
-            Increase(passiveValue * Time.deltaTime);
+        Increase(passiveValue * timeStep);
 
         if(currentValue > maxValue)
             currentValue = maxValue;

@@ -30,15 +30,7 @@ public class Player:NetworkBehaviour // NetworkBehaviour 상속
         Scanner = GetComponent<Scanner>();
     }
 
-    // 모든 플레이어(나 + 다른 유저들)에게 공통으로 필요한 초기화
-    private void Start()
-    {
-        // 체력 정보나 상호작용 트리거는 모두의 화면에서 준비되어야 함
-        Condition.Init();
-        Interaction.Init(this);
-    }
-
-    // 오직 '나의 캐릭터'가 생성될 때 딱 한 번 실행되는 함수 (Mirror 핵심 기능)
+    // 오직 '나의 캐릭터'가 생성될 때 딱 한 번 실행되는 함수 
     public override void OnStartLocalPlayer()
     {
         base.OnStartLocalPlayer();
@@ -49,6 +41,8 @@ public class Player:NetworkBehaviour // NetworkBehaviour 상속
 
         // 남의 캐릭터가 내 키보드를 먹거나, 내 화면에 스캐너를 띄우면 안 됨!
         // 따라서 입력, 스캐너, 조작 관련 초기화는 '내 캐릭터(로컬)'일 때만 켜줌
+        Condition.Init();
+        Interaction.Init(this);
         InputHandler.Init(this);
         Controller.Init(InputHandler, Condition);
         Scanner.Init();
