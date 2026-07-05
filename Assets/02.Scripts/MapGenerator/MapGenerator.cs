@@ -3,100 +3,255 @@ using System.Collections.Generic;
 using UnityEngine;
 using Mirror;
 
+public class MapData
+{
+    public int MinRooms { get; private set; }
+    public int MaxRooms { get; private set; }
+    public int HubRooms { get; private set; }
+
+    public MapData(int minRooms, int maxRooms, int hubRooms)
+    {
+        MinRooms = minRooms;
+        MaxRooms = maxRooms;
+        HubRooms = hubRooms;
+    }
+}
+
 [RequireComponent(typeof(NetworkIdentity))]
 public class MapGenerator:NetworkBehaviour
 {
     [SerializeField] private Room startRoomPrefab;
     [SerializeField] private Room[] roomPrefabs;
+    [SerializeField] private Room[] hubRoomPrefabs;
 
-    [SerializeField] private int maxRooms = 20;
-    [SerializeField] private LayerMask roomLayer; // Room 프리팹들이 가져야 할 레이어
+    [Header("Map Settings")]
+    [SerializeField] private int maxRetries = 10;
+    [SerializeField] private LayerMask roomLayer;
+    [SerializeField] private float minHubDistance = 30f;
+
+    private int hubRoomSpawnInterval;
+    private float minHubDistanceSqr; // 성능을 위한 제곱 거리 캐싱
 
     private List<Room> spawnedRooms = new List<Room>();
-    private List<RoomSocket> openSockets = new List<RoomSocket>();
+    private List<Room> spawnedHubs = new List<Room>();
 
-    public override void OnStartServer()
+    // 최적화: List 대신 Queue를 사용하여 Dequeue 연산 속도를 O(1)로 개선
+    private Queue<RoomSocket> openSockets = new Queue<RoomSocket>();
+
+    // 최적화: OverlapBox 배열 사전 할당으로 가비지 컬렉션(GC) 방지
+    private Collider[] overlapResults = new Collider[20];
+
+    public void SpawnMap(MapData data)
     {
-        StartCoroutine(GenerateMapRoutine());
+        if(data.HubRooms > data.MaxRooms)
+        {
+            Debug.LogError("허브 방의 개수가 최대 방 개수보다 클 수 없습니다!");
+            return;
+        }
+
+        hubRoomSpawnInterval = Mathf.Max(1, data.MinRooms / data.HubRooms);
+        minHubDistanceSqr = minHubDistance * minHubDistance; // 제곱값 미리 계산
+
+        StartCoroutine(GenerateMapRoutine(data));
     }
 
-    IEnumerator GenerateMapRoutine()
+    private IEnumerator GenerateMapRoutine(MapData data)
     {
-        // 1. 시작 방 생성
-        Room startRoom = Instantiate(startRoomPrefab, Vector3.zero, Quaternion.identity);
-        spawnedRooms.Add(startRoom);
-        openSockets.AddRange(startRoom.Sockets);
+        bool isMapValid = false;
+        int attemptCount = 0;
 
-        // 서버에서 만든 시작 방을 모든 클라이언트에게 동기화
-        NetworkServer.Spawn(startRoom.gameObject);
-
-        // 2. 맵 확장 루프
-        while(openSockets.Count > 0 && spawnedRooms.Count < maxRooms)
+        while(!isMapValid && attemptCount < maxRetries)
         {
-            yield return null;
+            attemptCount++;
+            ClearMap();
 
-            // 큐(Queue)처럼 첫 번째 소켓을 꺼냄
-            RoomSocket targetSocket = openSockets[0];
-            openSockets.RemoveAt(0);
+            Room startRoom = Instantiate(startRoomPrefab, Vector3.zero, Quaternion.identity);
+            spawnedRooms.Add(startRoom);
+            EnqueueSockets(startRoom.Sockets);
 
-            // 랜덤으로 생성할 방 프리팹 선택
-            Room prefabToSpawn = roomPrefabs[Random.Range(0, roomPrefabs.Length)];
-
-            // 새 방을 일단 허공에 생성
-            Room newRoom = Instantiate(prefabToSpawn);
-
-            // 새 방의 소켓 중 하나를 무작위로 선택하여 타겟 소켓과 연결할 준비
-            RoomSocket newRoomSocket = newRoom.Sockets[Random.Range(0, newRoom.Sockets.Count)];
-
-            // 회전 정렬: 타겟 소켓과 마주보도록(180도) 새 방을 회전시킴
-            float angleDiff = Vector3.SignedAngle(newRoomSocket.transform.forward, -targetSocket.transform.forward, Vector3.up);
-            newRoom.transform.Rotate(Vector3.up, angleDiff, Space.World);
-
-            // 위치 정렬: 두 소켓의 위치가 정확히 일치하도록 새 방을 이동시킴
-            Vector3 offset = targetSocket.transform.position - newRoomSocket.transform.position;
-            newRoom.transform.position += offset;
-
-            // 물리 연산이 업데이트 되도록 한 프레임 대기 (OverlapBox의 정확도를 위해)
-            Physics.SyncTransforms();
-
-            // 충돌 검사 (OverlapBox)
-            // 현재 내 방의 위치에 다른 콜라이더(다른 방)가 있는지 체크
-            Collider[] hitColliders = Physics.OverlapBox(newRoom.transform.position + newRoom.RoomArea.center, newRoom.RoomArea.size / 2.1f, newRoom.transform.rotation, roomLayer);
-
-            bool isOverlapping = false;
-            foreach(var col in hitColliders)
+            // 맵 확장 루프
+            while(openSockets.Count > 0 && spawnedRooms.Count < data.MaxRooms)
             {
-                // 자기 자신의 콜라이더는 무시
-                if(col.transform.root != newRoom.transform)
+                yield return null;
+
+                RoomSocket targetSocket = openSockets.Dequeue();
+
+                // 1. 생성할 방 프리팹 결정
+                (Room prefabToSpawn, bool isSpawningHub) = DeterminePrefabToSpawn(data, targetSocket.transform.position, startRoom);
+
+                // 2. 방 생성 및 위치/회전 정렬
+                Room newRoom = Instantiate(prefabToSpawn);
+                RoomSocket newRoomSocket = AlignRoomToSocket(newRoom, targetSocket);
+
+                // 3. 충돌 검사
+                if(HasOverlap(newRoom))
                 {
-                    isOverlapping = true;
-                    break;
+                    Destroy(newRoom.gameObject);
+                }
+                else
+                {
+                    // 4. 연결 성공 처리
+                    ConnectRooms(newRoom, targetSocket, newRoomSocket, isSpawningHub);
                 }
             }
 
-            if(isOverlapping)
+            // 최종 맵 검증
+            bool isDistanceValid = ValidateFinalHubDistances(startRoom);
+            if(spawnedRooms.Count >= data.MinRooms && spawnedHubs.Count == data.HubRooms && isDistanceValid)
             {
-                // 충돌했으므로 방을 파괴하고, 해당 타겟 소켓은 벽으로 마감
-                Destroy(newRoom.gameObject);
+                isMapValid = true;
             }
             else
             {
-                // 연결 성공
-                NetworkServer.Spawn(newRoom.gameObject);
-                targetSocket.ConnectSocket();
-                newRoomSocket.ConnectSocket();
-                spawnedRooms.Add(newRoom);
-
-                // 방금 연결에 사용한 소켓을 제외한 나머지 소켓들을 리스트에 추가
-                foreach(var sock in newRoom.Sockets)
-                {
-                    if(!sock.IsConnected)
-                        openSockets.Add(sock);
-                }
+                Debug.Log($"[시도 {attemptCount}] 맵 조건 미달. 재생성...");
             }
         }
-        openSockets.Clear();
 
-        Debug.Log("맵 생성 완료!");
+        if(isMapValid)
+        {
+            SyncMapToClients();
+        }
+        else
+        {
+            Debug.LogError("맵 생성 실패: 조건을 만족하는 맵을 만들지 못했습니다. minHubDistance 값을 줄여보세요.");
+        }
     }
+
+    #region 생성 & 정렬 로직 (Extract Methods)
+
+    // 허브 방 생성 조건인지 판별하여 적절한 프리팹을 튜플로 반환
+    private (Room prefab, bool isHub) DeterminePrefabToSpawn(MapData data, Vector3 targetPosition, Room startRoom)
+    {
+        int hubsLeft = data.HubRooms - spawnedHubs.Count;
+        int roomsLeft = data.MaxRooms - spawnedRooms.Count;
+
+        if(hubsLeft > 0)
+        {
+            bool isTimeForHub = spawnedRooms.Count >= (spawnedHubs.Count + 1) * hubRoomSpawnInterval;
+            bool isFarEnough = CheckHubDistance(targetPosition, startRoom);
+
+            if(roomsLeft <= hubsLeft || (isTimeForHub && isFarEnough))
+            {
+                return (hubRoomPrefabs[Random.Range(0, hubRoomPrefabs.Length)], true);
+            }
+        }
+        return (roomPrefabs[Random.Range(0, roomPrefabs.Length)], false);
+    }
+
+    private RoomSocket AlignRoomToSocket(Room newRoom, RoomSocket targetSocket)
+    {
+        RoomSocket newRoomSocket = newRoom.Sockets[Random.Range(0, newRoom.Sockets.Count)];
+
+        float angleDiff = Vector3.SignedAngle(newRoomSocket.transform.forward, -targetSocket.transform.forward, Vector3.up);
+        newRoom.transform.Rotate(Vector3.up, angleDiff, Space.World);
+
+        Vector3 offset = targetSocket.transform.position - newRoomSocket.transform.position;
+        newRoom.transform.position += offset;
+
+        return newRoomSocket;
+    }
+
+    private void ConnectRooms(Room newRoom, RoomSocket targetSocket, RoomSocket newRoomSocket, bool isHub)
+    {
+        if(isHub) spawnedHubs.Add(newRoom);
+
+        targetSocket.ConnectSocket();
+        newRoomSocket.ConnectSocket();
+        spawnedRooms.Add(newRoom);
+
+        EnqueueSockets(newRoom.Sockets);
+    }
+
+    #endregion
+
+    #region 성능 최적화 로직
+
+    // 기존의 OverlapBox 대신 NonAlloc을 사용하여 매번 배열이 생성되는 가비지(GC)를 방지
+    private bool HasOverlap(Room newRoom)
+    {
+        Physics.SyncTransforms();
+
+        int hitCount = Physics.OverlapBoxNonAlloc(
+            newRoom.transform.position + newRoom.RoomArea.center,
+            newRoom.RoomArea.size / 2.1f,
+            overlapResults,
+            newRoom.transform.rotation,
+            roomLayer
+        );
+
+        for(int i = 0; i < hitCount; i++)
+        {
+            if(overlapResults[i].transform.root != newRoom.transform)
+            {
+                return true; // 다른 방과 겹침
+            }
+        }
+        return false;
+    }
+
+    // Vector3.Distance 대신 sqrMagnitude(제곱)를 사용하여 비싼 Sqrt 연산 회피
+    private bool CheckHubDistance(Vector3 position, Room startRoom)
+    {
+        if((position - startRoom.transform.position).sqrMagnitude < minHubDistanceSqr)
+            return false;
+
+        foreach(var hub in spawnedHubs)
+        {
+            if((position - hub.transform.position).sqrMagnitude < minHubDistanceSqr)
+                return false;
+        }
+        return true;
+    }
+
+    private bool ValidateFinalHubDistances(Room startRoom)
+    {
+        for(int i = 0; i < spawnedHubs.Count; i++)
+        {
+            if((spawnedHubs[i].transform.position - startRoom.transform.position).sqrMagnitude < minHubDistanceSqr)
+                return false;
+
+            for(int j = i + 1; j < spawnedHubs.Count; j++)
+            {
+                if((spawnedHubs[i].transform.position - spawnedHubs[j].transform.position).sqrMagnitude < minHubDistanceSqr)
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    private void EnqueueSockets(List<RoomSocket> sockets)
+    {
+        foreach(var sock in sockets)
+        {
+            if(!sock.IsConnected)
+                openSockets.Enqueue(sock);
+        }
+    }
+
+    #endregion
+
+    #region 유틸리티
+
+    private void SyncMapToClients()
+    {
+        foreach(var room in spawnedRooms)
+        {
+            NetworkServer.Spawn(room.gameObject);
+        }
+        openSockets.Clear();
+        Debug.Log($"맵 생성 완료! (총 방 개수: {spawnedRooms.Count}, 허브 방 개수: {spawnedHubs.Count})");
+    }
+
+    private void ClearMap()
+    {
+        foreach(var room in spawnedRooms)
+        {
+            if(room != null) Destroy(room.gameObject);
+        }
+        spawnedRooms.Clear();
+        spawnedHubs.Clear();
+        openSockets.Clear();
+    }
+
+    #endregion
 }

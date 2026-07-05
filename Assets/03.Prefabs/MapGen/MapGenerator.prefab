@@ -55,7 +55,9 @@ MonoBehaviour:
   - {fileID: 8209552472413341484, guid: ac80c16f485166f4588c7266d593a8f1, type: 3}
   - {fileID: 1548196455060685995, guid: d4863dcb4b158ab4bb26181f48b3ff51, type: 3}
   - {fileID: 1157829504427890898, guid: 52bf2cb77796ec04a843ee283f16fd2e, type: 3}
-  maxRooms: 10
+  hubRoomPrefabs:
+  - {fileID: 8772673286915824322, guid: c462e3b6d3da2a349a3fa09c947d9916, type: 3}
+  maxRetries: 10
   roomLayer:
     serializedVersion: 2
     m_Bits: 512
