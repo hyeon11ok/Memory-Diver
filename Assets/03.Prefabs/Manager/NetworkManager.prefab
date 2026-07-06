@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4388897564790012378}
   - component: {fileID: 9399993897568431}
-  - component: {fileID: 6525469672929496221}
   - component: {fileID: 4476256852926012688}
   m_Layer: 0
   m_Name: NetworkManager
@@ -60,7 +59,7 @@ MonoBehaviour:
   disconnectInactiveConnections: 0
   disconnectInactiveTimeout: 60
   authenticator: {fileID: 0}
-  playerPrefab: {fileID: 2836050497762675492, guid: 7400ce1f35f53154ebf196e91a587624, type: 3}
+  playerPrefab: {fileID: 0}
   autoCreatePlayer: 1
   playerSpawnMethod: 0
   spawnPrefabs: []
@@ -80,20 +79,8 @@ MonoBehaviour:
   evaluationInterval: 3
   timeInterpolationGui: 0
   networkPrefabFolder: NetworkPrefabs
---- !u!114 &6525469672929496221
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5249008259414369387}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6442dc8070ceb41f094e44de0bf87274, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Mirror::Mirror.NetworkManagerHUD
-  offsetX: 0
-  offsetY: 0
+  lobbyPlayerPrefab: {fileID: 95907002435336815, guid: fa929ea0f94fba6419efd42d4515c448, type: 3}
+  gamePlayerPrefab: {fileID: 4939346355370957065, guid: 7400ce1f35f53154ebf196e91a587624, type: 3}
 --- !u!114 &4476256852926012688
 MonoBehaviour:
   m_ObjectHideFlags: 0

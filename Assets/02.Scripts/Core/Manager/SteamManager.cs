@@ -4,7 +4,14 @@ using Steamworks; // 스팀 기능을 쓰기 위한 네임스페이스
 [DisallowMultipleComponent]
 public class SteamManager:Singleton<SteamManager>
 {
-    private static SteamManager instance;
+    private bool m_bInitialized;
+    public static bool Initialized
+    {
+        get
+        {
+            return Instance.m_bInitialized;
+        }
+    }
 
     protected override void Awake()
     {
@@ -32,6 +39,7 @@ public class SteamManager:Singleton<SteamManager>
             return;
         }
 
+        m_bInitialized = true;
         Debug.Log("[Steamworks.NET] 스팀 초기화 완벽하게 성공!");
     }
 
@@ -44,7 +52,7 @@ public class SteamManager:Singleton<SteamManager>
     protected override void OnDestroy()
     {
         base.OnDestroy();
-        if(instance == this)
+        if(Instance == this)
         {
             // 게임이 꺼질 때 스팀 기능도 안전하게 종료
             SteamAPI.Shutdown();

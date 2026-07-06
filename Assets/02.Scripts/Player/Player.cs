@@ -9,6 +9,9 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Scanner))]
 public class Player:NetworkBehaviour // NetworkBehaviour »ó¼Ó
 {
+    public int ConnectionID;
+    public ulong PlayerSteamID;
+
     [SerializeField] private Camera playerCamera;
     [SerializeField] private PlayerInput playerInput;
     [SerializeField] private AudioListener audioListener;

@@ -1,11 +1,19 @@
 using UnityEngine;
 using Mirror;
+using Steamworks;
+using UnityEngine.SceneManagement;
+using System.Linq;
 
 public class CustomNetworkManager:NetworkManager
 {
     [Header("Custom Settings")]
     [Tooltip("게임 시작 시 자동 등록할 네트워크 프리팹들이 있는 폴더 이름 (Resources 폴더 하위)")]
-    public string networkPrefabFolder = "NetworkPrefabs";
+    private string networkPrefabFolder = "NetworkPrefabs";
+
+    [Space(10)]
+    [Header("Player Prefabs")]
+    [SerializeField] private GameObject lobbyPlayerPrefab;
+    [SerializeField] private Player gamePlayerPrefab;
 
     /// <summary>
     /// 서버가 처음 켜질 때 (호스트가 방을 팠을 때) 한 번 실행됩니다.
@@ -34,19 +42,60 @@ public class CustomNetworkManager:NetworkManager
     /// </summary>
     public override void OnServerAddPlayer(NetworkConnectionToClient conn)
     {
-        // 스폰 포인트(NetworkStartPosition)가 씬에 배치되어 있다면 그곳을 기준으로 스폰
-        Transform startPos = GetStartPosition();
+        // 현재 씬이 메인메뉴(로비)일 때만 단순 로비 플레이어 스폰
+        if(SceneManager.GetActiveScene().buildIndex == 0)
+        {
+            GameObject lobbyPlayerInstance = Instantiate(lobbyPlayerPrefab);
+            NetworkServer.AddPlayerForConnection(conn, lobbyPlayerInstance);
+        }
+    }
 
-        GameObject player = startPos != null
-            ? Instantiate(playerPrefab, startPos.position, startPos.rotation)
-            : Instantiate(playerPrefab);
+    // 방장이 게임 시작 버튼을 누를 때 실행 (또는 모두 레디 시 자동 실행)
+    public void StartGame()
+    {
+        if(SceneManager.GetActiveScene().buildIndex != 0) return;
 
-        // 플레이어 캐릭터 셋업 (예: 접속 순서대로 이름표 달아주기 등)
-        // player.name = $"Player_{conn.connectionId}";
+        // 1. 최소 1명 이상이어야 하고, 
+        // 2. 접속한 모든 유저(currentPlayers)의 IsReady가 true인지 확인
+        bool allReady = LobbyPlayerInfo.currentPlayers.Count > 0 &&
+                        LobbyPlayerInfo.currentPlayers.All(p => p.IsReady);
 
-        // 미러 서버에 플레이어 객체를 등록하고 클라이언트에게 권한(Authority)을 부여!
-        NetworkServer.AddPlayerForConnection(conn, player);
-        Debug.Log($"[CustomNetworkManager] 플레이어 접속 완료 (ID: {conn.connectionId})");
+        if(allReady)
+        {
+            ServerChangeScene("GameScene");
+        }
+        else
+        {
+            Debug.LogWarning("아직 모두 준비되지 않았습니다!");
+        }
+    }
+
+    public override void OnServerSceneChanged(string sceneName)
+    {
+        if(sceneName == "GameScene")
+        {
+            foreach(NetworkConnectionToClient conn in NetworkServer.connections.Values)
+            {
+                if(conn.identity != null)
+                {
+                    GameObject oldLobbyPlayer = conn.identity.gameObject;
+                    LobbyPlayerInfo lobbyInfo = oldLobbyPlayer.GetComponent<LobbyPlayerInfo>();
+
+                    Player gamePlayerInstance = Instantiate(gamePlayerPrefab);
+
+                    // ConnectionID는 직접 가져오고, 스팀ID는 lobbyInfo에서 넘겨받음
+                    gamePlayerInstance.ConnectionID = conn.connectionId;
+                    if(lobbyInfo != null)
+                    {
+                        gamePlayerInstance.PlayerSteamID = lobbyInfo.PlayerSteamID;
+                    }
+
+                    // 최신 버전에 맞게 ReplacePlayerForConnection 실행 및 구 객체 파괴
+                    NetworkServer.ReplacePlayerForConnection(conn, gamePlayerInstance.gameObject, ReplacePlayerOptions.KeepActive);
+                    NetworkServer.Destroy(oldLobbyPlayer);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -76,7 +125,11 @@ public class CustomNetworkManager:NetworkManager
         base.OnClientConnect();
         Debug.Log("[CustomNetworkManager] 서버 접속 성공! 로딩창을 닫고 게임 UI를 띄웁니다.");
 
-        // 예시: UIManager.Instance.CloseUI<LoadingUI>();
+        if(!NetworkClient.ready)
+        {
+            NetworkClient.Ready();
+        }
+        NetworkClient.AddPlayer();
     }
 
     /// <summary>
