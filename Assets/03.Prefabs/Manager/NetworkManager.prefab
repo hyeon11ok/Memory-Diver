@@ -60,9 +60,11 @@ MonoBehaviour:
   disconnectInactiveTimeout: 60
   authenticator: {fileID: 0}
   playerPrefab: {fileID: 0}
-  autoCreatePlayer: 1
+  autoCreatePlayer: 0
   playerSpawnMethod: 0
-  spawnPrefabs: []
+  spawnPrefabs:
+  - {fileID: 95907002435336815, guid: fa929ea0f94fba6419efd42d4515c448, type: 3}
+  - {fileID: 2836050497762675492, guid: 7400ce1f35f53154ebf196e91a587624, type: 3}
   exceptionsDisconnect: 1
   snapshotSettings:
     bufferTimeMultiplier: 2
@@ -78,7 +80,6 @@ MonoBehaviour:
   evaluationMethod: 0
   evaluationInterval: 3
   timeInterpolationGui: 0
-  networkPrefabFolder: NetworkPrefabs
   lobbyPlayerPrefab: {fileID: 95907002435336815, guid: fa929ea0f94fba6419efd42d4515c448, type: 3}
   gamePlayerPrefab: {fileID: 4939346355370957065, guid: 7400ce1f35f53154ebf196e91a587624, type: 3}
 --- !u!114 &4476256852926012688
