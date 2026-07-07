@@ -23,7 +23,7 @@ public class LobbySearchUI : WindowUI
         SteamLobby.Instance.OnNoFriendsLobbyFound += ShowAlert;
         SteamLobby.Instance.OnFriendsLobbyListFound += DisplayLobbyList;
 
-        InvokeRepeating(nameof(UpdateLobbyList), 0f, searchInterval); // 일정 간격으로 로비 목록 갱신
+        InvokeRepeating(nameof(UpdateLobbyList), 0.2f, searchInterval); // 일정 간격으로 로비 목록 갱신
     }
 
     private void OnDisable()
