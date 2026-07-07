@@ -3,14 +3,13 @@ using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
 
-public class LobbyTest : WindowUI
+public class LobbyUI : WindowUI
 {
-    [SerializeField] private GameObject playerInfoPanel;
+    [SerializeField] private Transform contentParent;    // ScrollView의 Content
     [SerializeField] private PlayerInfoUI playerInfoPrefab;
     [SerializeField] private Button readyBtn;
 
     private IObjectPool<PlayerInfoUI> infoUIPool;
-    private List<PlayerInfoUI> playerInfoUIs = new List<PlayerInfoUI>();
 
     private void Awake()
     {
@@ -35,17 +34,18 @@ public class LobbyTest : WindowUI
 
     public void UpdatePlayerInfo()
     {
-        foreach(var infoUI in playerInfoUIs)
+        // 기존에 그려져 있던 목록 초기화
+        foreach(Transform child in contentParent)
         {
-            infoUIPool.Release(infoUI);
+            if(child.GetComponent<PlayerInfoUI>() != null)
+                infoUIPool.Release(child.GetComponent<PlayerInfoUI>());
         }
 
         foreach(var infoUI in LobbyPlayerInfo.currentPlayers)
         {
             PlayerInfoUI info = infoUIPool.Get();
             info.SetPlayerInfo(infoUI.PlayerName);
-            info.transform.SetParent(playerInfoPanel.transform, false);
-            playerInfoUIs.Add(info);
+            info.transform.SetParent(contentParent, false);
         }
     }
 }

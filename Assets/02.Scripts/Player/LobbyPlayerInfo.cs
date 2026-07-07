@@ -62,6 +62,6 @@ public class LobbyPlayerInfo:NetworkBehaviour
     // UI 매니저에게 갱신 신호를 보내는 함수 (나중에 UI 스크립트와 연결)
     private void UpdateLobbyUI()
     {
-        UIManager.Instance.ShowUI<LobbyTest>()?.UpdatePlayerInfo();
+        UIManager.Instance.ShowUI<LobbyUI>()?.UpdatePlayerInfo();
     }
 }

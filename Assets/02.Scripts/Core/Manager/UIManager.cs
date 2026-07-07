@@ -27,6 +27,19 @@ public class UIManager : Singleton<UIManager>
         popupStack.Clear();
     }
 
+    public void CloseAllUI()
+    {
+        foreach(var ui in uiCache.Values)
+        {
+            if(ui.gameObject.activeSelf)
+            {
+                ui.OnClose();
+            }
+        }
+        activeWindowCount = 0;
+        popupStack.Clear();
+    }
+
     /// <summary>
     /// 제네릭 타입으로 UI를 동적 생성 또는 활성화합니다.
     /// 사용 예: UIManager.Instance.ShowUI<InventoryUI>();
