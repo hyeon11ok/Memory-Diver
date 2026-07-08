@@ -72,27 +72,37 @@ public class CustomNetworkManager:NetworkManager
 
     public override void OnServerSceneChanged(string sceneName)
     {
-        if(sceneName == "GameScene")
+        // 메인 메뉴(로비) 씬이 아닐 때만 실행되도록 넓게 조건 설정
+        // (보통 메인 메뉴가 Build Index 0번이므로 이를 활용해 문자열 하드코딩을 피합니다)
+        if(SceneManager.GetActiveScene().buildIndex != 0)
         {
             foreach(NetworkConnectionToClient conn in NetworkServer.connections.Values)
             {
                 if(conn.identity != null)
                 {
-                    GameObject oldLobbyPlayer = conn.identity.gameObject;
-                    LobbyPlayerInfo lobbyInfo = oldLobbyPlayer.GetComponent<LobbyPlayerInfo>();
+                    // 현재 플레이어가 들고 있는 객체가 '로비용 객체'인지 확인합니다.
+                    LobbyPlayerInfo lobbyInfo = conn.identity.GetComponent<LobbyPlayerInfo>();
 
-                    Player gamePlayerInstance = Instantiate(gamePlayerPrefab);
-
-                    // ConnectionID는 직접 가져오고, 스팀ID는 lobbyInfo에서 넘겨받음
-                    gamePlayerInstance.ConnectionID = conn.connectionId;
+                    // lobbyInfo가 존재한다면 = 방금 로비에서 처음 넘어와서 아직 로비 객체를 들고 있는 상태!
                     if(lobbyInfo != null)
                     {
+                        GameObject oldLobbyPlayer = conn.identity.gameObject;
+
+                        // 인게임 실제 캐릭터 스폰
+                        Player gamePlayerInstance = Instantiate(gamePlayerPrefab);
+
+                        // 기존 데이터(ConnectionID, SteamID) 계승
+                        gamePlayerInstance.ConnectionID = conn.connectionId;
                         gamePlayerInstance.PlayerSteamID = lobbyInfo.PlayerSteamID;
+
+                        // 권한을 인게임 캐릭터로 교체하고 기존 로비 객체 파괴
+                        NetworkServer.ReplacePlayerForConnection(conn, gamePlayerInstance.gameObject, ReplacePlayerOptions.KeepActive);
+                        NetworkServer.Destroy(oldLobbyPlayer);
                     }
 
-                    // 최신 버전에 맞게 ReplacePlayerForConnection 실행 및 구 객체 파괴
-                    NetworkServer.ReplacePlayerForConnection(conn, gamePlayerInstance.gameObject, ReplacePlayerOptions.KeepActive);
-                    NetworkServer.Destroy(oldLobbyPlayer);
+                    // 만약 lobbyInfo가 null이라면? 
+                    // 이미 StoreScene이나 GameScene을 돌고 있어서 'Player' 컴포넌트를 들고 있는 상태입니다.
+                    // Mirror가 알아서 새 씬으로 Player 객체를 넘겨주었으므로 아무것도 안 해도 완벽하게 작동합니다!
                 }
             }
         }
