@@ -90,19 +90,25 @@ public class CustomNetworkManager:NetworkManager
             {
                 if(conn.identity == null)
                 {
+                    // 인게임 실제 캐릭터 스폰
                     Player gamePlayerInstance = Instantiate(gamePlayerPrefab);
 
-                    // 2. 백업해 둔 데이터 꺼내서 주입하기
+                    // 백업해 둔 데이터 꺼내서 주입하기
                     gamePlayerInstance.ConnectionID = conn.connectionId;
                     if(PlayerDataBackup.TryGetValue(conn.connectionId, out ulong backupSteamID))
                     {
                         gamePlayerInstance.PlayerSteamID = backupSteamID;
+                        // 캐릭터 체력 골드 등의 정보도 여기서 넘겨주기
                     }
 
-                    // 3. 권한을 부여하며 클라이언트 화면에 짠! 하고 나타나게 함 (Replace 대신 Add 사용)
+                    // 권한을 부여하며 클라이언트 화면에 나타나게 함
                     NetworkServer.AddPlayerForConnection(conn, gamePlayerInstance.gameObject);
                 }
             }
+        }
+        else
+        {
+            PlayerDataBackup.Clear();
         }
 
         UIManager.Instance?.ResetManager();
