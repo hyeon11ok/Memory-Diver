@@ -38,7 +38,7 @@ public class Interaction :NetworkBehaviour
                 {
                     curInteractGameObject = hit.collider.gameObject;
                     curInteractable = interactable;
-                    UIManager.Instance.ShowUI<InteractUI>()?.SetInteractText(curInteractable.GetInteractPrompt());
+                    UIManager.Instance?.ShowUI<InteractUI>()?.SetInteractText(curInteractable.GetInteractPrompt());
                 }
             }
             else
@@ -48,7 +48,7 @@ public class Interaction :NetworkBehaviour
                     InteractCancel();
                     curInteractGameObject = null;
                     curInteractable = null;
-                    UIManager.Instance.CloseUI<InteractUI>();
+                    UIManager.Instance?.CloseUI<InteractUI>();
                 }
             }
         }

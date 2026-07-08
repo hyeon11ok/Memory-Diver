@@ -8,8 +8,13 @@ public abstract class WindowUI:BaseUI
     public override void OnOpen()
     {
         base.OnOpen();
-        exitButton?.onClick.RemoveAllListeners(); // 중복 등록 방지
         exitButton?.onClick.AddListener(OnClickExitButton);
+    }
+
+    override public void OnClose()
+    {
+        base.OnClose();
+        exitButton?.onClick.RemoveAllListeners();
     }
 
     protected virtual void OnClickExitButton()

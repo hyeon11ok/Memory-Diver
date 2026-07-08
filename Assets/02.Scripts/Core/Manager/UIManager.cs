@@ -40,6 +40,16 @@ public class UIManager : Singleton<UIManager>
         popupStack.Clear();
     }
 
+    public T GetOpenUI<T>() where T : BaseUI
+    {
+        Type type = typeof(T);
+        if(uiCache.TryGetValue(type, out BaseUI ui) && ui.gameObject.activeSelf)
+        {
+            return ui as T;
+        }
+        return null;
+    }
+
     /// <summary>
     /// 제네릭 타입으로 UI를 동적 생성 또는 활성화합니다.
     /// 사용 예: UIManager.Instance.ShowUI<InventoryUI>();
@@ -71,8 +81,8 @@ public class UIManager : Singleton<UIManager>
             return null;
         }
 
-        // 3. 인스턴스화 후 매니저의 자식으로 배치합니다.
-        GameObject uiObject = Instantiate(prefab, this.transform);
+        // 3. 인스턴스화
+        GameObject uiObject = Instantiate(prefab);
         T newUI = uiObject.GetComponent<T>();
 
         if(newUI == null)

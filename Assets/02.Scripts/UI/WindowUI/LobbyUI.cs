@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using Mirror;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
@@ -8,12 +8,32 @@ public class LobbyUI : WindowUI
     [SerializeField] private Transform contentParent;    // ScrollView의 Content
     [SerializeField] private PlayerInfoUI playerInfoPrefab;
     [SerializeField] private Button readyBtn;
+    [SerializeField] private Button startBtn;
 
     private IObjectPool<PlayerInfoUI> infoUIPool;
 
-    private void Awake()
+    public override void OnOpen()
     {
+        base.OnOpen();
         readyBtn.onClick.AddListener(OnReadyButtonClicked);
+
+        if(NetworkServer.active)
+        {
+            Debug.LogWarning("Local player is server, showing start button.");
+            startBtn.gameObject.SetActive(true);
+            startBtn.onClick.AddListener(OnStartButtonClicked);
+        }
+        else
+        {
+            startBtn.gameObject.SetActive(false);
+        }
+    }
+
+    public override void OnClose()
+    {
+        base.OnClose();
+        readyBtn.onClick.RemoveAllListeners();
+        startBtn.onClick.RemoveAllListeners();
     }
 
     private void Start()
@@ -28,8 +48,18 @@ public class LobbyUI : WindowUI
 
     private void OnReadyButtonClicked()
     {
-        Debug.Log("Ready button clicked");
-        // 여기에 준비 버튼 클릭 시 실행할 로직을 추가하세요.
+        foreach(var playerInfo in LobbyPlayerInfo.currentPlayers)
+        {
+            if(playerInfo.isLocalPlayer)
+            {
+                playerInfo.CmdToggleReady();
+            }
+        }
+    }
+
+    private void OnStartButtonClicked()
+    {
+        (CustomNetworkManager.singleton as CustomNetworkManager).StartGame();
     }
 
     public void UpdatePlayerInfo()
@@ -41,10 +71,10 @@ public class LobbyUI : WindowUI
                 infoUIPool.Release(child.GetComponent<PlayerInfoUI>());
         }
 
-        foreach(var infoUI in LobbyPlayerInfo.currentPlayers)
+        foreach(var playerInfo in LobbyPlayerInfo.currentPlayers)
         {
             PlayerInfoUI info = infoUIPool.Get();
-            info.SetPlayerInfo(infoUI.PlayerName);
+            info.SetPlayerInfo(playerInfo.PlayerName, playerInfo.IsReady);
             info.transform.SetParent(contentParent, false);
         }
     }

@@ -41,12 +41,12 @@ public class LobbySearchUI : WindowUI
     protected override void OnClickExitButton()
     {
         base.OnClickExitButton();
-        UIManager.Instance.CloseUI<LobbySearchUI>();
+        UIManager.Instance?.CloseUI<LobbySearchUI>();
     }
 
     private void UpdateLobbyList()
     {
-        SteamLobby.Instance.SearchFriendsLobbies();
+        SteamLobby.Instance?.SearchFriendsLobbies();
     }
 
     // ¾Ë¸² ¶ç¿ì±â

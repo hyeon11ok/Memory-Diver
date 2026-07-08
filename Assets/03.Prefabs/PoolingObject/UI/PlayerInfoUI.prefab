@@ -221,6 +221,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInfoUI
   playerNameTxt: {fileID: 254596234655806381}
+  readyToggle: {fileID: 3678328690353889606}
 --- !u!1 &6617468084995349679
 GameObject:
   m_ObjectHideFlags: 0

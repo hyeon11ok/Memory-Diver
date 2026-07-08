@@ -9,6 +9,7 @@ public class LobbyPlayerInfo:NetworkBehaviour
     // 로비 UI에서 쉽게 접근하기 위해 현재 접속 중인 플레이어들을 모아두는 리스트
     public static readonly List<LobbyPlayerInfo> currentPlayers = new List<LobbyPlayerInfo>();
 
+    [SyncVar] public int ConnectionID; 
     [SyncVar] public ulong PlayerSteamID;
 
     // 값이 변경될 때마다 OnInfoUpdated 함수가 실행되어 UI를 갱신합니다.
@@ -19,7 +20,6 @@ public class LobbyPlayerInfo:NetworkBehaviour
     public override void OnStartClient()
     {
         currentPlayers.Add(this);
-        Debug.LogWarning($"[LobbyPlayerInfo] 클라이언트 접속 - 현재 인원: {currentPlayers.Count}명");
         UpdateLobbyUI();
     }
 
@@ -35,14 +35,15 @@ public class LobbyPlayerInfo:NetworkBehaviour
     {
         // 내 스팀 프로필 정보를 가져와서 서버로 전송
         string mySteamName = SteamFriends.GetPersonaName();
+        int myConnectionID = connectionToClient.connectionId;
         ulong mySteamID = SteamUser.GetSteamID().m_SteamID;
 
-        CmdSetPlayerInfo(mySteamID, mySteamName);
+        CmdSetPlayerInfo(myConnectionID, mySteamID, mySteamName);
     }
 
     // [Command]: 클라이언트가 서버에게 "내 정보 이걸로 세팅해줘" 라고 요청하는 함수
     [Command]
-    private void CmdSetPlayerInfo(ulong steamID, string steamName)
+    private void CmdSetPlayerInfo(int ConnectionID, ulong steamID, string steamName)
     {
         PlayerSteamID = steamID;
         PlayerName = steamName; // SyncVar이므로 자동으로 모든 클라이언트에게 전파됨
@@ -62,6 +63,22 @@ public class LobbyPlayerInfo:NetworkBehaviour
     // UI 매니저에게 갱신 신호를 보내는 함수 (나중에 UI 스크립트와 연결)
     private void UpdateLobbyUI()
     {
-        UIManager.Instance.ShowUI<LobbyUI>()?.UpdatePlayerInfo();
+        // 1. 씬 전환으로 인해 현재 객체가 파괴 중이거나 씬이 언로드 중일 때는 UI 갱신 무시
+        if(!gameObject.scene.isLoaded) return;
+
+        // 2. 현재 씬이 메인 메뉴(빌드 인덱스 0)가 아닐 때는 무시
+        if(UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex != 0) return;
+
+        // 3. 유니티 객체는 `?.` 대신 명시적인 `== null` 체크를 사용해야 완벽하게 걸러집니다.
+        if(UIManager.Instance == null) return;
+
+        UIManager.Instance?.ShowUI<LobbyUI>()?.UpdatePlayerInfo();
+
+        LobbyUI lobbyUI = UIManager.Instance.GetOpenUI<LobbyUI>();
+
+        if(lobbyUI != null)
+        {
+            lobbyUI.UpdatePlayerInfo();
+        }
     }
 }

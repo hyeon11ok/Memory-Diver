@@ -3,6 +3,7 @@ using Mirror;
 using Steamworks;
 using UnityEngine.SceneManagement;
 using System.Linq;
+using System.Collections.Generic;
 
 public class CustomNetworkManager:NetworkManager
 {
@@ -14,6 +15,9 @@ public class CustomNetworkManager:NetworkManager
     [Header("Player Prefabs")]
     [SerializeField] private GameObject lobbyPlayerPrefab;
     [SerializeField] private Player gamePlayerPrefab;
+
+    // 유저의 데이터를 보관할 딕셔너리 (Key: ConnectionID, Value: SteamID)
+    public Dictionary<int, ulong> PlayerDataBackup = new Dictionary<int, ulong>();
 
     /// <summary>
     /// 서버가 처음 켜질 때 (호스트가 방을 팠을 때) 한 번 실행됩니다.
@@ -62,7 +66,13 @@ public class CustomNetworkManager:NetworkManager
 
         if(allReady)
         {
-            ServerChangeScene("GameScene");
+            PlayerDataBackup.Clear();
+            foreach(var player in LobbyPlayerInfo.currentPlayers)
+            {
+                PlayerDataBackup[player.ConnectionID] = player.PlayerSteamID;
+            }
+
+            ServerChangeScene(SceneChangeManager.Instance?.GameScene.name);
         }
         else
         {
@@ -78,34 +88,24 @@ public class CustomNetworkManager:NetworkManager
         {
             foreach(NetworkConnectionToClient conn in NetworkServer.connections.Values)
             {
-                if(conn.identity != null)
+                if(conn.identity == null)
                 {
-                    // 현재 플레이어가 들고 있는 객체가 '로비용 객체'인지 확인합니다.
-                    LobbyPlayerInfo lobbyInfo = conn.identity.GetComponent<LobbyPlayerInfo>();
+                    Player gamePlayerInstance = Instantiate(gamePlayerPrefab);
 
-                    // lobbyInfo가 존재한다면 = 방금 로비에서 처음 넘어와서 아직 로비 객체를 들고 있는 상태!
-                    if(lobbyInfo != null)
+                    // 2. 백업해 둔 데이터 꺼내서 주입하기
+                    gamePlayerInstance.ConnectionID = conn.connectionId;
+                    if(PlayerDataBackup.TryGetValue(conn.connectionId, out ulong backupSteamID))
                     {
-                        GameObject oldLobbyPlayer = conn.identity.gameObject;
-
-                        // 인게임 실제 캐릭터 스폰
-                        Player gamePlayerInstance = Instantiate(gamePlayerPrefab);
-
-                        // 기존 데이터(ConnectionID, SteamID) 계승
-                        gamePlayerInstance.ConnectionID = conn.connectionId;
-                        gamePlayerInstance.PlayerSteamID = lobbyInfo.PlayerSteamID;
-
-                        // 권한을 인게임 캐릭터로 교체하고 기존 로비 객체 파괴
-                        NetworkServer.ReplacePlayerForConnection(conn, gamePlayerInstance.gameObject, ReplacePlayerOptions.KeepActive);
-                        NetworkServer.Destroy(oldLobbyPlayer);
+                        gamePlayerInstance.PlayerSteamID = backupSteamID;
                     }
 
-                    // 만약 lobbyInfo가 null이라면? 
-                    // 이미 StoreScene이나 GameScene을 돌고 있어서 'Player' 컴포넌트를 들고 있는 상태입니다.
-                    // Mirror가 알아서 새 씬으로 Player 객체를 넘겨주었으므로 아무것도 안 해도 완벽하게 작동합니다!
+                    // 3. 권한을 부여하며 클라이언트 화면에 짠! 하고 나타나게 함 (Replace 대신 Add 사용)
+                    NetworkServer.AddPlayerForConnection(conn, gamePlayerInstance.gameObject);
                 }
             }
         }
+
+        UIManager.Instance?.ResetManager();
     }
 
     /// <summary>
