@@ -61,6 +61,7 @@ MonoBehaviour:
   roomLayer:
     serializedVersion: 2
     m_Bits: 512
+  minHubDistance: 30
 --- !u!114 &3841311624755145901
 MonoBehaviour:
   m_ObjectHideFlags: 0
