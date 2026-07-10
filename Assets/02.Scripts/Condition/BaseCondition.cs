@@ -12,7 +12,10 @@ public abstract class BaseCondition:NetworkBehaviour, IDamagable
 
     private float serverTickRate = 0.2f; // 서버 패시브는 1초마다 실행
 
-    public void Init()
+    public ConditionData ConditionData => conditionData;
+    public Dictionary<ConditionType, float> ConditionValues => conditionValues;
+
+    public virtual void Init()
     {
         conditionData.Init();
         foreach(Condition condition in conditionData.Conditions)

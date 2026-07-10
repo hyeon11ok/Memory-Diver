@@ -15,9 +15,8 @@ public class StageManager : NetworkBehaviour
     {
         if(!isServer) return;
 
-        // 1. GameManager에서 현재 스테이지 레벨을 가져와서 설정 (예시로 1단계)
-        // 실제로는 GameManager.Instance.CurrentStageLevel; 같은 형태로 가져옵니다.
-        int stageLevel = 1; 
+        // 1. GameManager에서 현재 스테이지 레벨을 가져와서 설정
+        int stageLevel = GameManager.Instance.CurrentStageLevel;  
 
         // 2. 스테이지를 기반으로 생성할 방 개수 계산
         MapData mapData = CalculateMapData(stageLevel);

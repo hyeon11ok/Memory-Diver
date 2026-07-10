@@ -16,6 +16,9 @@ public class CustomNetworkManager:NetworkManager
     [SerializeField] private GameObject lobbyPlayerPrefab;
     [SerializeField] private Player gamePlayerPrefab;
 
+    [Header("Game Managers")]
+    [SerializeField] private GameObject gameManagerPrefab;
+
     // 유저의 데이터를 보관할 딕셔너리 (Key: ConnectionID, Value: SteamID)
     public Dictionary<int, ulong> PlayerDataBackup = new Dictionary<int, ulong>();
 
@@ -28,7 +31,7 @@ public class CustomNetworkManager:NetworkManager
         base.OnStartServer();
         Debug.Log("[CustomNetworkManager] 서버가 시작되었습니다!");
 
-        // 1. Resources 폴더를 이용한 네트워크 프리팹 일괄 자동 등록
+        // Resources 폴더를 이용한 네트워크 프리팹 일괄 자동 등록
         GameObject[] prefabs = Resources.LoadAll<GameObject>(networkPrefabFolder);
         foreach(GameObject prefab in prefabs)
         {
@@ -36,9 +39,14 @@ public class CustomNetworkManager:NetworkManager
         }
         Debug.Log($"[CustomNetworkManager] {prefabs.Length}개의 네트워크 프리팹 자동 등록 완료.");
 
-        // 2. PoolManager 네트워크 풀링 등록 예시 (필요 시 주석 해제)
+        // PoolManager 네트워크 풀링 등록 예시 (필요 시 주석 해제)
         // GameObject monsterPrefab = Resources.Load<GameObject>("NetworkPrefabs/Monster");
         // PoolManager.Instance.RegisterNetworkPool(monsterPrefab, 10, 50);
+
+        // 서버가 처음 켜질 때 GameManager를 스폰 (DontDestroyOnLoad로 관리)
+        GameObject gmInstance = Instantiate(gameManagerPrefab);
+        DontDestroyOnLoad(gmInstance); // 씬이 전환되어도 파괴되지 않게 보호
+        NetworkServer.Spawn(gmInstance);
     }
 
     /// <summary>
@@ -80,38 +88,44 @@ public class CustomNetworkManager:NetworkManager
         }
     }
 
+    public override void ServerChangeScene(string newSceneName)
+    {
+        UIManager.Instance?.ResetManager();
+        base.ServerChangeScene(newSceneName);
+    }
+
     public override void OnServerSceneChanged(string sceneName)
     {
-        // 메인 메뉴(로비) 씬이 아닐 때만 실행되도록 넓게 조건 설정
-        // (보통 메인 메뉴가 Build Index 0번이므로 이를 활용해 문자열 하드코딩을 피합니다)
-        if(SceneManager.GetActiveScene().buildIndex != 0)
-        {
-            foreach(NetworkConnectionToClient conn in NetworkServer.connections.Values)
-            {
-                if(conn.identity == null)
-                {
-                    // 인게임 실제 캐릭터 스폰
-                    Player gamePlayerInstance = Instantiate(gamePlayerPrefab);
-
-                    // 백업해 둔 데이터 꺼내서 주입하기
-                    gamePlayerInstance.ConnectionID = conn.connectionId;
-                    if(PlayerDataBackup.TryGetValue(conn.connectionId, out ulong backupSteamID))
-                    {
-                        gamePlayerInstance.PlayerSteamID = backupSteamID;
-                        // 캐릭터 체력 골드 등의 정보도 여기서 넘겨주기
-                    }
-
-                    // 권한을 부여하며 클라이언트 화면에 나타나게 함
-                    NetworkServer.AddPlayerForConnection(conn, gamePlayerInstance.gameObject);
-                }
-            }
-        }
-        else
+        if(SceneManager.GetActiveScene().buildIndex == 0)
         {
             PlayerDataBackup.Clear();
         }
+    }
 
-        UIManager.Instance?.ResetManager();
+    public override void OnServerReady(NetworkConnectionToClient conn)
+    {
+        base.OnServerReady(conn);
+
+        if(conn.identity == null && SceneManager.GetActiveScene().buildIndex != 0)
+        {
+            Player gamePlayerInstance = Instantiate(gamePlayerPrefab);
+
+            // 백업해 둔 데이터 꺼내서 주입하기
+            gamePlayerInstance.ConnectionID = conn.connectionId;
+            if(PlayerDataBackup.TryGetValue(conn.connectionId, out ulong backupSteamID))
+            {
+                gamePlayerInstance.PlayerSteamID = backupSteamID;
+            }
+
+            if(GameManager.Instance != null)
+            {
+                PlayerData savedData = GameManager.Instance.GetSavedPlayerData(conn.connectionId);
+                gamePlayerInstance.Condition?.GetSavedPlayerData(savedData);
+            }
+
+            // 권한을 부여하며 클라이언트 화면에 나타나게 함
+            NetworkServer.AddPlayerForConnection(conn, gamePlayerInstance.gameObject);
+        }
     }
 
     /// <summary>
