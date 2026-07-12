@@ -4,8 +4,9 @@ using UnityEngine;
 // 현재 스테이지 레벨을 기반으로 생성될 맵과 아이템의 개수를 계산하여 스테이지를 관리하는 매니저 클래스입니다.
 public class StageManager : NetworkBehaviour
 {
+    private GameManager gmInstance;
+
     [SerializeField] private MapGenerator mapGenerator;
-    [SerializeField] private StageData[] stageDataArray;
 
     [Header("기본 맵 세팅")]
     [SerializeField] private int baseMinRooms = 10;  // 1레벨 최소 방
@@ -14,23 +15,18 @@ public class StageManager : NetworkBehaviour
 
     private void Start()
     {
-        foreach(var stageData in stageDataArray)
-        {
-            
-        }
-
         if(!isServer) return;
 
+        gmInstance = GameManager.Instance;
+
         // GameManager에서 현재 스테이지 레벨을 가져와서 설정
-        int stageLevel = GameManager.Instance.CurrentStageLevel;  
+        int stageLevel = gmInstance.CurrentStageLevel;  
 
         // 스테이지를 기반으로 생성할 방 개수 계산
         MapData mapData = CalculateMapData(stageLevel);
 
-        int stageIndex = stageLevel % stageDataArray.Length;
-
         // MapGenerator를 통해 맵 생성 시작
-        mapGenerator.SpawnMap(mapData, stageDataArray[stageIndex]);
+        mapGenerator.SpawnMap(mapData, gmInstance.GetCurrentStageData());
     }
 
     /// <summary>

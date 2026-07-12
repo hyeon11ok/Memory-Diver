@@ -41,6 +41,8 @@ public class MapGenerator:NetworkBehaviour
 
     public void SpawnMap(MapData mapdata, StageData stageData)
     {
+        if(!NetworkServer.active) return;
+
         if(mapdata.HubRooms > mapdata.MaxRooms)
         {
             Debug.LogError("허브 방의 개수가 최대 방 개수보다 클 수 없습니다!");
@@ -236,6 +238,7 @@ public class MapGenerator:NetworkBehaviour
         foreach(var room in spawnedRooms)
         {
             NetworkServer.Spawn(room.gameObject);
+            room.SpawnMemoryItems();
         }
         openSockets.Clear();
         Debug.Log($"맵 생성 완료! (총 방 개수: {spawnedRooms.Count}, 허브 방 개수: {spawnedHubs.Count})");

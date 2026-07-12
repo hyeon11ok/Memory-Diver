@@ -1,4 +1,5 @@
 using UnityEngine;
+using Mirror;
 
 [CreateAssetMenu(fileName = "StageData", menuName = "Scriptable Objects/StageData")]
 public class StageData : ScriptableObject
@@ -9,10 +10,39 @@ public class StageData : ScriptableObject
     [SerializeField] private Room[] hubRoomPrefabs;
     [Space(10)]
     [Header("Item Prefabs")]
-    [SerializeField] private GameObject[] itemPrefabs;
+    [SerializeField] private MemoryItem[] memoryItemPrefabs_small;
+    [SerializeField] private MemoryItem[] memoryItemPrefabs_middle;
+    [SerializeField] private MemoryItem[] memoryItemPrefabs_large;
 
     public Room StartRoomPrefab => startRoomPrefab;
     public Room[] RoomPrefabs => roomPrefabs;
     public Room[] HubRoomPrefabs => hubRoomPrefabs;
-    public GameObject[] ItemPrefabs => itemPrefabs;
+    public MemoryItem[] MemoryItemPrefabsSmall => memoryItemPrefabs_small;
+    public MemoryItem[] MemoryItemPrefabsMiddle => memoryItemPrefabs_middle;
+    public MemoryItem[] MemoryItemPrefabsLarge => memoryItemPrefabs_large;
+
+    public void RegisterPrefabs()
+    {
+        NetworkClient.RegisterPrefab(startRoomPrefab.gameObject);
+        foreach(var roomPrefab in roomPrefabs)
+        {
+            NetworkClient.RegisterPrefab(roomPrefab.gameObject);
+        }
+        foreach(var hubRoomPrefab in hubRoomPrefabs)
+        {
+            NetworkClient.RegisterPrefab(hubRoomPrefab.gameObject);
+        }
+        foreach(var memoryItemPrefab in memoryItemPrefabs_small)
+        {
+            NetworkClient.RegisterPrefab(memoryItemPrefab.gameObject);
+        }
+        foreach(var memoryItemPrefab in memoryItemPrefabs_middle)
+        {
+            NetworkClient.RegisterPrefab(memoryItemPrefab.gameObject);
+        }
+        foreach(var memoryItemPrefab in memoryItemPrefabs_large)
+        {
+            NetworkClient.RegisterPrefab(memoryItemPrefab.gameObject);
+        }
+    }
 }

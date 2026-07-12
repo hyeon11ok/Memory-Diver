@@ -21,4 +21,9 @@ MonoBehaviour:
   - {fileID: 1157829504427890898, guid: 52bf2cb77796ec04a843ee283f16fd2e, type: 3}
   hubRoomPrefabs:
   - {fileID: 8772673286915824322, guid: c462e3b6d3da2a349a3fa09c947d9916, type: 3}
-  itemPrefabs: []
+  memoryItemPrefabs_small:
+  - {fileID: 1999723021990005710, guid: 52814a7945e5499479a5458d833b7129, type: 3}
+  memoryItemPrefabs_middle:
+  - {fileID: 1717823189876005447, guid: 613b91f494de8ca4ca4b4ebc9d8e4a21, type: 3}
+  memoryItemPrefabs_large:
+  - {fileID: 1828312216247320780, guid: 631c42a78ddbf274a97616f5135d7f9c, type: 3}

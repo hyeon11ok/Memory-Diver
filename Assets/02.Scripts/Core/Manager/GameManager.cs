@@ -7,8 +7,23 @@ public class GameManager : NetworkSingleton<GameManager>
 {
     [SyncVar(hook = nameof(OnStageChanged))]
     public int CurrentStageLevel = 1;
+    [SerializeField] private StageData[] stageDataArray;
 
     private Dictionary<int, PlayerData> sessionPlayerData = new Dictionary<int, PlayerData>();
+
+    public StageData GetCurrentStageData()
+    {
+        int stageIndex = (CurrentStageLevel - 1) % stageDataArray.Length;
+        return stageDataArray[stageIndex];
+    }
+
+    private void Start()
+    {
+        foreach(var stageData in stageDataArray)
+        {
+            stageData.RegisterPrefabs();
+        }
+    }
 
     [Server]
     public void StageClear()
