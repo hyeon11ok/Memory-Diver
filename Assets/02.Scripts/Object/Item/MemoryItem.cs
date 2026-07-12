@@ -30,11 +30,10 @@ public class MemoryItem : Item
     private Material[] originalMaterials;
     private List<Material> modifiedMaterials = new List<Material>();
     private float minY, maxY;
+    private float centerY;
 
-    protected override void Start()
+    public void InitItem()
     {
-        base.Start();
-
         if(isClient)
         {
             MemoryRenderer = GetComponent<MeshRenderer>();
@@ -45,10 +44,9 @@ public class MemoryItem : Item
             modifiedMaterials.Add(downloadMaterial);
 
             Collider collider = GetComponent<Collider>();
-            float centerY = collider.bounds.center.y - transform.position.y;
-            float sizeY = collider.bounds.size.y;
-            minY = centerY - sizeY / 2;
-            maxY = centerY + sizeY / 2;
+            centerY = (collider.bounds.center.y / transform.localScale.y) - transform.position.y;
+            minY = centerY - (collider.bounds.extents.y / transform.localScale.y);
+            maxY = centerY + (collider.bounds.extents.y / transform.localScale.y);
         }
     }
 
@@ -118,6 +116,7 @@ public class MemoryItem : Item
             downloadMaterial.SetFloat("_MinY", minY);
             downloadMaterial.SetFloat("_MaxY", maxY);
             downloadMaterial.SetFloat("_Percent", 0);
+            Debug.LogWarning($"{gameObject.name} / Center : {centerY} / Min : {minY} / Max : {maxY}");
         }
         else // 다운로드 중단
         {

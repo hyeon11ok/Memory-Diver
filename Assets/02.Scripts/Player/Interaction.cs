@@ -45,7 +45,6 @@ public class Interaction :NetworkBehaviour
             {
                 if(curInteractGameObject != null)
                 {
-                    InteractCancel();
                     curInteractGameObject = null;
                     curInteractable = null;
                     UIManager.Instance?.CloseUI<InteractUI>();

@@ -56,8 +56,8 @@ public class MemoryItemSpawner : MonoBehaviour
 
         // 랜덤으로 아이템 프리팹 선택 후 스폰
         int randomIndex = Random.Range(0, itemPrefabs.Length);
-        MemoryItem selectedItemPrefab = itemPrefabs[randomIndex];
-        GameObject spawnedItem = Instantiate(selectedItemPrefab, transform.position, transform.rotation).gameObject;
-        NetworkServer.Spawn(spawnedItem);
+        MemoryItem spawnedItem = Instantiate(itemPrefabs[randomIndex], transform.position, transform.rotation);
+        NetworkServer.Spawn(spawnedItem.gameObject);
+        spawnedItem.InitItem(); // 아이템 초기화
     }
 }
