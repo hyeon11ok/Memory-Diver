@@ -153,6 +153,8 @@ MonoBehaviour:
   syncMode: 0
   syncInterval: 0
   mapGenerator: {fileID: 2078214883}
+  stageDataArray:
+  - {fileID: 11400000, guid: 4b7e2c3d623fa144684be29adb442a8e, type: 2}
   baseMinRooms: 10
   baseMaxRooms: 15
   baseHubRooms: 2

@@ -65,6 +65,14 @@ MonoBehaviour:
   spawnPrefabs:
   - {fileID: 95907002435336815, guid: fa929ea0f94fba6419efd42d4515c448, type: 3}
   - {fileID: 2836050497762675492, guid: 7400ce1f35f53154ebf196e91a587624, type: 3}
+  - {fileID: 466937584516996617, guid: ba162d4b5c7235047b0049da27b73d9e, type: 3}
+  - {fileID: 6765603123340677907, guid: c462e3b6d3da2a349a3fa09c947d9916, type: 3}
+  - {fileID: 6765603123340677907, guid: 590d3c662045dd642803ac8b106cc37c, type: 3}
+  - {fileID: 8238902597261861407, guid: dc907fc092ef0084ba5724180192b650, type: 3}
+  - {fileID: 5936049230192286883, guid: ac80c16f485166f4588c7266d593a8f1, type: 3}
+  - {fileID: 6710460783360353966, guid: d4863dcb4b158ab4bb26181f48b3ff51, type: 3}
+  - {fileID: 7344917340180597532, guid: 52bf2cb77796ec04a843ee283f16fd2e, type: 3}
+  - {fileID: 2450503205990107829, guid: ed4f48006caf979409aa9486aff1859e, type: 3}
   exceptionsDisconnect: 1
   snapshotSettings:
     bufferTimeMultiplier: 2
@@ -82,6 +90,7 @@ MonoBehaviour:
   timeInterpolationGui: 0
   lobbyPlayerPrefab: {fileID: 95907002435336815, guid: fa929ea0f94fba6419efd42d4515c448, type: 3}
   gamePlayerPrefab: {fileID: 4939346355370957065, guid: 7400ce1f35f53154ebf196e91a587624, type: 3}
+  gameManagerPrefab: {fileID: 466937584516996617, guid: ba162d4b5c7235047b0049da27b73d9e, type: 3}
 --- !u!114 &4476256852926012688
 MonoBehaviour:
   m_ObjectHideFlags: 0

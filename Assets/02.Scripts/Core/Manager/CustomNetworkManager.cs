@@ -31,18 +31,6 @@ public class CustomNetworkManager:NetworkManager
         base.OnStartServer();
         Debug.Log("[CustomNetworkManager] 서버가 시작되었습니다!");
 
-        // Resources 폴더를 이용한 네트워크 프리팹 일괄 자동 등록
-        GameObject[] prefabs = Resources.LoadAll<GameObject>(networkPrefabFolder);
-        foreach(GameObject prefab in prefabs)
-        {
-            NetworkClient.RegisterPrefab(prefab);
-        }
-        Debug.Log($"[CustomNetworkManager] {prefabs.Length}개의 네트워크 프리팹 자동 등록 완료.");
-
-        // PoolManager 네트워크 풀링 등록 예시 (필요 시 주석 해제)
-        // GameObject monsterPrefab = Resources.Load<GameObject>("NetworkPrefabs/Monster");
-        // PoolManager.Instance.RegisterNetworkPool(monsterPrefab, 10, 50);
-
         // 서버가 처음 켜질 때 GameManager를 스폰 (DontDestroyOnLoad로 관리)
         GameObject gmInstance = Instantiate(gameManagerPrefab);
         DontDestroyOnLoad(gmInstance); // 씬이 전환되어도 파괴되지 않게 보호

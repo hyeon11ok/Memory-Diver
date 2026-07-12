@@ -20,9 +20,7 @@ public class MapData
 [RequireComponent(typeof(NetworkIdentity))]
 public class MapGenerator:NetworkBehaviour
 {
-    [SerializeField] private Room startRoomPrefab;
-    [SerializeField] private Room[] roomPrefabs;
-    [SerializeField] private Room[] hubRoomPrefabs;
+    private StageData stageData;
 
     [Header("Map Settings")]
     [SerializeField] private int maxRetries = 10;
@@ -41,21 +39,22 @@ public class MapGenerator:NetworkBehaviour
     // 최적화: OverlapBox 배열 사전 할당으로 가비지 컬렉션(GC) 방지
     private Collider[] overlapResults = new Collider[20];
 
-    public void SpawnMap(MapData data)
+    public void SpawnMap(MapData mapdata, StageData stageData)
     {
-        if(data.HubRooms > data.MaxRooms)
+        if(mapdata.HubRooms > mapdata.MaxRooms)
         {
             Debug.LogError("허브 방의 개수가 최대 방 개수보다 클 수 없습니다!");
             return;
         }
 
-        hubRoomSpawnInterval = Mathf.Max(1, data.MinRooms / data.HubRooms);
+        hubRoomSpawnInterval = Mathf.Max(1, mapdata.MinRooms / mapdata.HubRooms);
         minHubDistanceSqr = minHubDistance * minHubDistance; // 제곱값 미리 계산
+        this.stageData = stageData;
 
-        StartCoroutine(GenerateMapRoutine(data));
+        StartCoroutine(GenerateMapRoutine(mapdata));
     }
 
-    private IEnumerator GenerateMapRoutine(MapData data)
+    private IEnumerator GenerateMapRoutine(MapData mapData)
     {
         bool isMapValid = false;
         int attemptCount = 0;
@@ -65,19 +64,19 @@ public class MapGenerator:NetworkBehaviour
             attemptCount++;
             ClearMap();
 
-            Room startRoom = Instantiate(startRoomPrefab, Vector3.zero, Quaternion.identity);
+            Room startRoom = Instantiate(stageData.StartRoomPrefab, Vector3.zero, Quaternion.identity);
             spawnedRooms.Add(startRoom);
             EnqueueSockets(startRoom.Sockets);
 
             // 맵 확장 루프
-            while(openSockets.Count > 0 && spawnedRooms.Count < data.MaxRooms)
+            while(openSockets.Count > 0 && spawnedRooms.Count < mapData.MaxRooms)
             {
                 yield return null;
 
                 RoomSocket targetSocket = openSockets.Dequeue();
 
                 // 1. 생성할 방 프리팹 결정
-                (Room prefabToSpawn, bool isSpawningHub) = DeterminePrefabToSpawn(data, targetSocket.transform.position, startRoom);
+                (Room prefabToSpawn, bool isSpawningHub) = DeterminePrefabToSpawn(mapData, targetSocket.transform.position, startRoom);
 
                 // 2. 방 생성 및 위치/회전 정렬
                 Room newRoom = Instantiate(prefabToSpawn);
@@ -97,7 +96,7 @@ public class MapGenerator:NetworkBehaviour
 
             // 최종 맵 검증
             bool isDistanceValid = ValidateFinalHubDistances(startRoom);
-            if(spawnedRooms.Count >= data.MinRooms && spawnedHubs.Count == data.HubRooms && isDistanceValid)
+            if(spawnedRooms.Count >= mapData.MinRooms && spawnedHubs.Count == mapData.HubRooms && isDistanceValid)
             {
                 isMapValid = true;
             }
@@ -132,10 +131,10 @@ public class MapGenerator:NetworkBehaviour
 
             if(roomsLeft <= hubsLeft || (isTimeForHub && isFarEnough))
             {
-                return (hubRoomPrefabs[Random.Range(0, hubRoomPrefabs.Length)], true);
+                return (stageData.HubRoomPrefabs[Random.Range(0, stageData.HubRoomPrefabs.Length)], true);
             }
         }
-        return (roomPrefabs[Random.Range(0, roomPrefabs.Length)], false);
+        return (stageData.RoomPrefabs[Random.Range(0, stageData.RoomPrefabs.Length)], false);
     }
 
     private RoomSocket AlignRoomToSocket(Room newRoom, RoomSocket targetSocket)
