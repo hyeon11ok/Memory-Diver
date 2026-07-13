@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class GameManager : NetworkSingleton<GameManager>
 {
+    public bool IsSceneReady = false;
+
     [SyncVar(hook = nameof(OnStageChanged))]
     public int CurrentStageLevel = 1;
     [SerializeField] private StageData[] stageDataArray;
@@ -22,6 +24,16 @@ public class GameManager : NetworkSingleton<GameManager>
         foreach(var stageData in stageDataArray)
         {
             stageData.RegisterPrefabs();
+        }
+    }
+
+    [Server]
+    public void SetSceneReady(bool isReady)
+    {
+        IsSceneReady = isReady;
+        if(isReady)
+        {
+            (CustomNetworkManager.singleton as CustomNetworkManager).SpawnPlayersForWaitingClients();
         }
     }
 
@@ -72,10 +84,13 @@ public class GameManager : NetworkSingleton<GameManager>
 
     public void GoToNextScene(SceneAsset nextScene)
     {
-        // 1. 기존 씬의 유저 데이터 백업 (GameManager 담당)
+        // 기존 씬의 유저 데이터 백업 (GameManager 담당)
         SaveAllPlayersData();
 
-        // 2. 씬 전환 (NetworkManager 담당)
+        // 씬 준비 완료 상태 초기화
+        IsSceneReady = false;
+
+        // 씬 전환 (NetworkManager 담당)
         CustomNetworkManager.singleton.ServerChangeScene(nextScene.name);
     }
 }

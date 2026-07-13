@@ -15,6 +15,7 @@ public class CustomNetworkManager:NetworkManager
     [Header("Player Prefabs")]
     [SerializeField] private GameObject lobbyPlayerPrefab;
     [SerializeField] private Player gamePlayerPrefab;
+    [SerializeField] private GameObject storePlayerPrefab;
 
     [Header("Game Managers")]
     [SerializeField] private GameObject gameManagerPrefab;
@@ -96,23 +97,72 @@ public class CustomNetworkManager:NetworkManager
 
         if(conn.identity == null && SceneManager.GetActiveScene().buildIndex != 0)
         {
-            Player gamePlayerInstance = Instantiate(gamePlayerPrefab);
+            SpawnPlayersForWaitingClients();
+        }
+    }
 
-            // 백업해 둔 데이터 꺼내서 주입하기
-            gamePlayerInstance.ConnectionID = conn.connectionId;
+    // 유저의 준비가 완료된 후 또는 맵 생성이 끝난 직후 호출될 "대기 인원 스폰" 함수
+    public void SpawnPlayersForWaitingClients()
+    {
+        // 서버에 연결된 모든 유저를 순회
+        foreach(var conn in NetworkServer.connections.Values)
+        {
+            // 준비가 되지 않은 유저가 있다면 대기
+            if(!conn.isReady)
+            {
+                Debug.LogWarning($"[CustomNetworkManager] 연결 ID {conn.connectionId} 유저가 아직 준비되지 않아 스폰을 대기합니다.");
+                return;
+            }
+        }
+
+        Debug.LogWarning("@@@@" + GameManager.Instance.IsSceneReady);
+
+        if(!GameManager.Instance.IsSceneReady)
+        {
+            Debug.LogWarning("[CustomNetworkManager] 맵 생성이 완료되지 않아 플레이어 스폰을 대기합니다.");
+            return;
+        }
+
+        foreach(var conn in NetworkServer.connections.Values)
+        {
+            if(conn.identity == null)
+            {
+                SpawnPlayerForConnection(conn);
+            }
+        }
+    }
+
+    // 실제 아바타 스폰 로직 
+    private void SpawnPlayerForConnection(NetworkConnectionToClient conn)
+    {
+        GameObject newPlayerObj = null;
+
+        if(SceneManager.GetActiveScene().name == SceneChangeManager.Instance.GameScene.name)
+        {
+            newPlayerObj = Instantiate(gamePlayerPrefab.gameObject);
+            Player gamePlayer = newPlayerObj.GetComponent<Player>();
+            if(gamePlayer != null) gamePlayer.ConnectionID = conn.connectionId;
             if(PlayerDataBackup.TryGetValue(conn.connectionId, out ulong backupSteamID))
             {
-                gamePlayerInstance.PlayerSteamID = backupSteamID;
+                gamePlayer.PlayerSteamID = backupSteamID;
             }
 
+            // 플레이어 캐릭터 현재 정보 전달
             if(GameManager.Instance != null)
             {
                 PlayerData savedData = GameManager.Instance.GetSavedPlayerData(conn.connectionId);
-                gamePlayerInstance.Condition?.GetSavedPlayerData(savedData);
+                gamePlayer.Condition?.GetSavedPlayerData(savedData);
             }
+        }
+        //else if(SceneManager.GetActiveScene().name == SceneChangeManager.Instance.StoreScene.name)
+        //{
+        //    newPlayerObj = Instantiate(storePlayerPrefab);
+        //    // ...
+        //}
 
-            // 권한을 부여하며 클라이언트 화면에 나타나게 함
-            NetworkServer.AddPlayerForConnection(conn, gamePlayerInstance.gameObject);
+        if(newPlayerObj != null)
+        {
+            NetworkServer.AddPlayerForConnection(conn, newPlayerObj);
         }
     }
 

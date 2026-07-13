@@ -38,6 +38,8 @@ public class Player:NetworkBehaviour // NetworkBehaviour 상속
     {
         base.OnStartLocalPlayer();
 
+        if(Camera.main != null) Camera.main.gameObject.SetActive(false); // 기존 메인 카메라 비활성화
+
         if(playerCamera != null) playerCamera.gameObject.SetActive(true);
         if(playerInput != null) playerInput.enabled = true;
         if(audioListener != null) audioListener.enabled = true;

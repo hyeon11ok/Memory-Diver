@@ -9,8 +9,8 @@ using Mirror;
 public abstract class Item :NetworkBehaviour, IInteractable, IScannable
 {
     [Header("아이템 정보")]
-    [SerializeField] private string itemName;
-    [SerializeField] private string interactPrompt;
+    [SerializeField] protected string itemName;
+    [SerializeField] protected string interactPrompt;
     [Space(10)]
     [Header("스캔 반사 이펙트 관련 변수")]
     [SerializeField] private EchoEffect echoEffect;

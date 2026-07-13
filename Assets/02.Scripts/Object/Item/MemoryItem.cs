@@ -75,6 +75,7 @@ public class MemoryItem : Item
         interactPlayer = null;
         isDownloading = false; // SyncVar 변경 -> 모든 유저의 화면에서 다운로드 연출 중단
         interactorNetId = 0;
+        UIManager.Instance?.ShowUI<InteractUI>()?.SetInteractText(GetInteractPrompt());
     }
 
     [ServerCallback]
@@ -131,6 +132,7 @@ public class MemoryItem : Item
         if(isDownloading && downloadMaterial != null)
         {
             downloadMaterial.SetFloat("_Percent", downloadProgress);
+            UIManager.Instance?.ShowUI<InteractUI>()?.SetInteractText("<" + itemName + $">\nDownloading... {Mathf.RoundToInt(downloadProgress * 100)}%");
         }
     }
 }

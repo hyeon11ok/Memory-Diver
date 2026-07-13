@@ -111,6 +111,7 @@ public class MapGenerator:NetworkBehaviour
         if(isMapValid)
         {
             SyncMapToClients();
+            GameManager.Instance.SetSceneReady(true);
         }
         else
         {
