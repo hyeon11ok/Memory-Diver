@@ -89,6 +89,8 @@ public class CustomNetworkManager:NetworkManager
         {
             PlayerDataBackup.Clear();
         }
+
+        UIManager.Instance?.ShowUI<LoadingUI>();
     }
 
     public override void OnServerReady(NetworkConnectionToClient conn)
@@ -115,14 +117,13 @@ public class CustomNetworkManager:NetworkManager
             }
         }
 
-        Debug.LogWarning("@@@@" + GameManager.Instance.IsSceneReady);
-
         if(!GameManager.Instance.IsSceneReady)
         {
             Debug.LogWarning("[CustomNetworkManager] 맵 생성이 완료되지 않아 플레이어 스폰을 대기합니다.");
             return;
         }
 
+        // 모든 준비가 완료되었으므로, 연결된 모든 유저에게 플레이어를 스폰
         foreach(var conn in NetworkServer.connections.Values)
         {
             if(conn.identity == null)
@@ -130,6 +131,7 @@ public class CustomNetworkManager:NetworkManager
                 SpawnPlayerForConnection(conn);
             }
         }
+        UIManager.Instance?.CloseUI<LoadingUI>();
     }
 
     // 실제 아바타 스폰 로직 
