@@ -69,7 +69,7 @@ public class CustomNetworkManager:NetworkManager
                 PlayerDataBackup[player.ConnectionID] = player.PlayerSteamID;
             }
 
-            ServerChangeScene(SceneChangeManager.Instance?.GameScene.name);
+            ServerChangeScene(SceneDatabase.Instance.GameScene);
         }
         else
         {
@@ -137,7 +137,7 @@ public class CustomNetworkManager:NetworkManager
     {
         GameObject newPlayerObj = null;
 
-        if(SceneManager.GetActiveScene().name == SceneChangeManager.Instance.GameScene.name)
+        if(SceneManager.GetActiveScene().name == SceneDatabase.Instance.GameScene)
         {
             newPlayerObj = Instantiate(gamePlayerPrefab.gameObject);
             Player gamePlayer = newPlayerObj.GetComponent<Player>();
@@ -145,13 +145,6 @@ public class CustomNetworkManager:NetworkManager
             if(PlayerDataBackup.TryGetValue(conn.connectionId, out ulong backupSteamID))
             {
                 gamePlayer.PlayerSteamID = backupSteamID;
-            }
-
-            // 플레이어 캐릭터 현재 정보 전달
-            if(GameManager.Instance != null)
-            {
-                PlayerData savedData = GameManager.Instance.GetSavedPlayerData(conn.connectionId);
-                gamePlayer.Condition?.GetSavedPlayerData(savedData);
             }
         }
         //else if(SceneManager.GetActiveScene().name == SceneChangeManager.Instance.StoreScene.name)

@@ -20,9 +20,15 @@ public class InputHandler:NetworkBehaviour
     [SerializeField] private Timer jumpInputDelay;
     [SerializeField] private Timer scanningInputDelay;
 
+    private void Awake()
+    {
+        this.enabled = false;
+    }
+
     public void Init(Player player)
     {
         this.player = player;
+        this.enabled = true;
     }
 
     private void Update()

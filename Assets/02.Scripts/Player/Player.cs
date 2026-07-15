@@ -46,10 +46,10 @@ public class Player:NetworkBehaviour // NetworkBehaviour 상속
 
         // 남의 캐릭터가 내 키보드를 먹거나, 내 화면에 스캐너를 띄우면 안 됨!
         // 따라서 입력, 스캐너, 조작 관련 초기화는 '내 캐릭터(로컬)'일 때만 켜줌
-        Condition.Init();
+        Condition.Init(this);
         Interaction.Init(this);
         InputHandler.Init(this);
-        Controller.Init(InputHandler, Condition);
-        Scanner.Init();
+        Controller.Init(this, InputHandler, Condition);
+        Scanner.Init(this);
     }
 }

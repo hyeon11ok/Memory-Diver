@@ -14,9 +14,15 @@ public class Interaction :NetworkBehaviour
     private GameObject curInteractGameObject;
     private IInteractable curInteractable;
 
+    private void Awake()
+    {
+        this.enabled = false;
+    }
+
     public void Init(Player player)
     {
         this.player = player;
+        this.enabled = true;
     }
 
     // Update is called once per frame

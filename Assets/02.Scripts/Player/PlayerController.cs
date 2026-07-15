@@ -21,6 +21,7 @@ public class PlayerController :NetworkBehaviour
     [HideInInspector]
     public bool canLook = true;
 
+    private Player player;
     private InputHandler inputHandler;
     private PlayerCondition playerCondition;
     private Rigidbody rb;
@@ -29,9 +30,14 @@ public class PlayerController :NetworkBehaviour
 
     public int MoveSpeed { get => moveSpeed; }
 
-
-    public void Init(InputHandler inputHandler, PlayerCondition playerCondition)
+    private void Awake()
     {
+        this.enabled = false;
+    }
+
+    public void Init(Player player, InputHandler inputHandler, PlayerCondition playerCondition)
+    {
+        this.player = player;
         this.inputHandler = inputHandler;
         this.playerCondition = playerCondition;
         rb = GetComponent<Rigidbody>();
@@ -46,6 +52,8 @@ public class PlayerController :NetworkBehaviour
             // [최적화] 남의 캐릭터는 내 화면에서 물리 연산을 직접 할 필요가 없음 (NetworkTransform이 위치를 잡아줌)
             rb.isKinematic = true;
         }
+
+        this.enabled = true;
     }
 
     private void FixedUpdate()

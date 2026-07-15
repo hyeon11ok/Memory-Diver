@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Scanner :NetworkBehaviour
 {
+    private Player player;
+
     [SerializeField] private float scanRadius = 10f;
     [SerializeField] private float scanTime = 0.5f;
     [SerializeField] private LayerMask scanLayerMask;
@@ -18,9 +20,16 @@ public class Scanner :NetworkBehaviour
     private readonly int scanRadiusID = Shader.PropertyToID("_ScanRadius");
     private readonly int scanCenterID = Shader.PropertyToID("_ScanCenter");
 
-    public void Init()
+    private void Awake()
     {
+        this.enabled = false;
+    }
+
+    public void Init(Player player)
+    {
+        this.player = player;
         Shader.SetGlobalFloat(scanRadiusID, curRadius);
+        this.enabled = true;
     }
 
     // Update is called once per frame

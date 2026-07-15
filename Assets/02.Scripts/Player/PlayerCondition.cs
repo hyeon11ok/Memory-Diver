@@ -5,16 +5,25 @@ using Mirror;
 
 public class PlayerCondition:BaseCondition
 {
+    private Player player;
+
     [SyncVar(hook = nameof(OnNeuronPointsChanged))]
     public int neuronPoints = 0; // 뉴런 포인트
 
-    public override void Init()
+    private void Awake()
     {
-        // 기존 Init() 로직은 자동 실행 되기 때문에 사용하지 않음
+        this.enabled = false;
+    }
+
+    public void Init(Player player)
+    {
+        this.player = player;
+        PlayerData savedData = GameManager.Instance.GetSavedPlayerData(player.ConnectionID);
+        GetSavedPlayerData(savedData);
+        this.enabled = true;
     }
 
     // 서버에서 플레이어 데이터를 받아와서 적용하는 함수
-    // 기존 Init() 대신 사용
     public void GetSavedPlayerData(PlayerData data)
     {
         if(data != null)
