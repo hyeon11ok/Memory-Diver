@@ -7,13 +7,11 @@ public class MapData
 {
     public int MinRooms { get; private set; }
     public int MaxRooms { get; private set; }
-    public int HubRooms { get; private set; }
 
-    public MapData(int minRooms, int maxRooms, int hubRooms)
+    public MapData(int minRooms, int maxRooms)
     {
         MinRooms = minRooms;
         MaxRooms = maxRooms;
-        HubRooms = hubRooms;
     }
 }
 
@@ -25,13 +23,8 @@ public class MapGenerator:NetworkBehaviour
     [Header("Map Settings")]
     [SerializeField] private int maxRetries = 10;
     [SerializeField] private LayerMask roomLayer;
-    [SerializeField] private float minHubDistance = 30f;
-
-    private int hubRoomSpawnInterval;
-    private float minHubDistanceSqr; // 성능을 위한 제곱 거리 캐싱
 
     private List<Room> spawnedRooms = new List<Room>();
-    private List<Room> spawnedHubs = new List<Room>();
 
     // 최적화: List 대신 Queue를 사용하여 Dequeue 연산 속도를 O(1)로 개선
     private Queue<RoomSocket> openSockets = new Queue<RoomSocket>();
@@ -43,14 +36,6 @@ public class MapGenerator:NetworkBehaviour
     {
         if(!NetworkServer.active) return;
 
-        if(mapdata.HubRooms > mapdata.MaxRooms)
-        {
-            Debug.LogError("허브 방의 개수가 최대 방 개수보다 클 수 없습니다!");
-            return;
-        }
-
-        hubRoomSpawnInterval = Mathf.Max(1, mapdata.MinRooms / mapdata.HubRooms);
-        minHubDistanceSqr = minHubDistance * minHubDistance; // 제곱값 미리 계산
         this.stageData = stageData;
 
         StartCoroutine(GenerateMapRoutine(mapdata));
@@ -78,7 +63,7 @@ public class MapGenerator:NetworkBehaviour
                 RoomSocket targetSocket = openSockets.Dequeue();
 
                 // 1. 생성할 방 프리팹 결정
-                (Room prefabToSpawn, bool isSpawningHub) = DeterminePrefabToSpawn(mapData, targetSocket.transform.position, startRoom);
+                Room prefabToSpawn  = DeterminePrefabToSpawn(mapData, targetSocket.transform.position, startRoom);
 
                 // 2. 방 생성 및 위치/회전 정렬
                 Room newRoom = Instantiate(prefabToSpawn);
@@ -92,13 +77,12 @@ public class MapGenerator:NetworkBehaviour
                 else
                 {
                     // 4. 연결 성공 처리
-                    ConnectRooms(newRoom, targetSocket, newRoomSocket, isSpawningHub);
+                    ConnectRooms(newRoom, targetSocket, newRoomSocket);
                 }
             }
 
             // 최종 맵 검증
-            bool isDistanceValid = ValidateFinalHubDistances(startRoom);
-            if(spawnedRooms.Count >= mapData.MinRooms && spawnedHubs.Count == mapData.HubRooms && isDistanceValid)
+            if(spawnedRooms.Count >= mapData.MinRooms)
             {
                 isMapValid = true;
             }
@@ -121,23 +105,11 @@ public class MapGenerator:NetworkBehaviour
 
     #region 생성 & 정렬 로직 (Extract Methods)
 
-    // 허브 방 생성 조건인지 판별하여 적절한 프리팹을 튜플로 반환
-    private (Room prefab, bool isHub) DeterminePrefabToSpawn(MapData data, Vector3 targetPosition, Room startRoom)
+    // 생성할 방 프리팹을 결정하는 로직
+    private Room DeterminePrefabToSpawn(MapData data, Vector3 targetPosition, Room startRoom)
     {
-        int hubsLeft = data.HubRooms - spawnedHubs.Count;
         int roomsLeft = data.MaxRooms - spawnedRooms.Count;
-
-        if(hubsLeft > 0)
-        {
-            bool isTimeForHub = spawnedRooms.Count >= (spawnedHubs.Count + 1) * hubRoomSpawnInterval;
-            bool isFarEnough = CheckHubDistance(targetPosition, startRoom);
-
-            if(roomsLeft <= hubsLeft || (isTimeForHub && isFarEnough))
-            {
-                return (stageData.HubRoomPrefabs[Random.Range(0, stageData.HubRoomPrefabs.Length)], true);
-            }
-        }
-        return (stageData.RoomPrefabs[Random.Range(0, stageData.RoomPrefabs.Length)], false);
+        return stageData.RoomPrefabs[Random.Range(0, stageData.RoomPrefabs.Length)];
     }
 
     private RoomSocket AlignRoomToSocket(Room newRoom, RoomSocket targetSocket)
@@ -153,10 +125,8 @@ public class MapGenerator:NetworkBehaviour
         return newRoomSocket;
     }
 
-    private void ConnectRooms(Room newRoom, RoomSocket targetSocket, RoomSocket newRoomSocket, bool isHub)
+    private void ConnectRooms(Room newRoom, RoomSocket targetSocket, RoomSocket newRoomSocket)
     {
-        if(isHub) spawnedHubs.Add(newRoom);
-
         targetSocket.ConnectSocket();
         newRoomSocket.ConnectSocket();
         spawnedRooms.Add(newRoom);
@@ -191,36 +161,6 @@ public class MapGenerator:NetworkBehaviour
         return false;
     }
 
-    // Vector3.Distance 대신 sqrMagnitude(제곱)를 사용하여 비싼 Sqrt 연산 회피
-    private bool CheckHubDistance(Vector3 position, Room startRoom)
-    {
-        if((position - startRoom.transform.position).sqrMagnitude < minHubDistanceSqr)
-            return false;
-
-        foreach(var hub in spawnedHubs)
-        {
-            if((position - hub.transform.position).sqrMagnitude < minHubDistanceSqr)
-                return false;
-        }
-        return true;
-    }
-
-    private bool ValidateFinalHubDistances(Room startRoom)
-    {
-        for(int i = 0; i < spawnedHubs.Count; i++)
-        {
-            if((spawnedHubs[i].transform.position - startRoom.transform.position).sqrMagnitude < minHubDistanceSqr)
-                return false;
-
-            for(int j = i + 1; j < spawnedHubs.Count; j++)
-            {
-                if((spawnedHubs[i].transform.position - spawnedHubs[j].transform.position).sqrMagnitude < minHubDistanceSqr)
-                    return false;
-            }
-        }
-        return true;
-    }
-
     private void EnqueueSockets(List<RoomSocket> sockets)
     {
         foreach(var sock in sockets)
@@ -242,7 +182,7 @@ public class MapGenerator:NetworkBehaviour
             room.SpawnMemoryItems();
         }
         openSockets.Clear();
-        Debug.Log($"맵 생성 완료! (총 방 개수: {spawnedRooms.Count}, 허브 방 개수: {spawnedHubs.Count})");
+        Debug.Log($"맵 생성 완료! (총 방 개수: {spawnedRooms.Count})");
     }
 
     private void ClearMap()
@@ -252,7 +192,6 @@ public class MapGenerator:NetworkBehaviour
             if(room != null) Destroy(room.gameObject);
         }
         spawnedRooms.Clear();
-        spawnedHubs.Clear();
         openSockets.Clear();
     }
 

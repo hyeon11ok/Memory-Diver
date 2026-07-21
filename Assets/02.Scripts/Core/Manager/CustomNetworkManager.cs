@@ -8,8 +8,6 @@ using System.Collections.Generic;
 public class CustomNetworkManager:NetworkManager
 {
     [Header("Custom Settings")]
-    [Tooltip("게임 시작 시 자동 등록할 네트워크 프리팹들이 있는 폴더 이름 (Resources 폴더 하위)")]
-    private string networkPrefabFolder = "NetworkPrefabs";
 
     [Space(10)]
     [Header("Player Prefabs")]

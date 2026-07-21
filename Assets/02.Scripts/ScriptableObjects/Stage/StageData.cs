@@ -7,7 +7,6 @@ public class StageData : ScriptableObject
     [Header("Room Prefabs")]
     [SerializeField] private Room startRoomPrefab;
     [SerializeField] private Room[] roomPrefabs;
-    [SerializeField] private Room[] hubRoomPrefabs;
     [Space(10)]
     [Header("Item Prefabs")]
     [SerializeField] private MemoryItem[] memoryItemPrefabs_small;
@@ -16,7 +15,6 @@ public class StageData : ScriptableObject
 
     public Room StartRoomPrefab => startRoomPrefab;
     public Room[] RoomPrefabs => roomPrefabs;
-    public Room[] HubRoomPrefabs => hubRoomPrefabs;
     public MemoryItem[] MemoryItemPrefabsSmall => memoryItemPrefabs_small;
     public MemoryItem[] MemoryItemPrefabsMiddle => memoryItemPrefabs_middle;
     public MemoryItem[] MemoryItemPrefabsLarge => memoryItemPrefabs_large;
@@ -27,10 +25,6 @@ public class StageData : ScriptableObject
         foreach(var roomPrefab in roomPrefabs)
         {
             NetworkClient.RegisterPrefab(roomPrefab.gameObject);
-        }
-        foreach(var hubRoomPrefab in hubRoomPrefabs)
-        {
-            NetworkClient.RegisterPrefab(hubRoomPrefab.gameObject);
         }
         foreach(var memoryItemPrefab in memoryItemPrefabs_small)
         {

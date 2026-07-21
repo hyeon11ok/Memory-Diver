@@ -45,6 +45,6 @@ public class StageManager : NetworkBehaviour
 
         int hubRooms = baseHubRooms + ((level - 1) / 3);
 
-        return new MapData(minRooms, maxRooms, hubRooms);
+        return new MapData(minRooms, maxRooms);
     }
 }
