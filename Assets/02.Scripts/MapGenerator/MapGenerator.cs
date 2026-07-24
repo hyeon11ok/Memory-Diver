@@ -176,6 +176,7 @@ public class MapGenerator:NetworkBehaviour
 
     private void SyncMapToClients()
     {
+        float totalMemorySyncRate = 0f;
         foreach(var room in spawnedRooms)
         {
             NetworkServer.Spawn(room.gameObject);

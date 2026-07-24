@@ -9,6 +9,13 @@ public class GameManager : NetworkSingleton<GameManager>
 
     [SyncVar(hook = nameof(OnStageChanged))]
     public int CurrentStageLevel = 1;
+
+    // 클리어 목표 수치 관련 변수
+    [SyncVar]
+    private float goalMemorySyncRate;
+    [SyncVar]
+    private float currentMemorySyncRate;
+
     [SerializeField] private StageData[] stageDataArray;
 
     private Dictionary<int, PlayerData> sessionPlayerData = new Dictionary<int, PlayerData>();
@@ -25,6 +32,13 @@ public class GameManager : NetworkSingleton<GameManager>
         {
             stageData.RegisterPrefabs();
         }
+    }
+
+    [Server]
+    public void SetGoalMemorySyncRate(float rate)
+    {
+        goalMemorySyncRate = rate;
+        currentMemorySyncRate = 0;
     }
 
     [Server]

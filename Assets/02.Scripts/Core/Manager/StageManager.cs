@@ -11,7 +11,6 @@ public class StageManager : NetworkBehaviour
     [Header("기본 맵 세팅")]
     [SerializeField] private int baseMinRooms = 10;  // 1레벨 최소 방
     [SerializeField] private int baseMaxRooms = 15; // 1레벨 최대 방
-    [SerializeField] private int baseHubRooms = 2;  // 1레벨 허브 방
 
     private void Start()
     {
@@ -42,8 +41,6 @@ public class StageManager : NetworkBehaviour
         // Sqrt(1)=1, Sqrt(4)=2, Sqrt(9)=3 ... 
         int minRooms = baseMinRooms + Mathf.FloorToInt((Mathf.Sqrt(level) - 1) * minMultiplier);
         int maxRooms = baseMaxRooms + Mathf.FloorToInt((Mathf.Sqrt(level) - 1) * maxMultiplier);
-
-        int hubRooms = baseHubRooms + ((level - 1) / 3);
 
         return new MapData(minRooms, maxRooms);
     }

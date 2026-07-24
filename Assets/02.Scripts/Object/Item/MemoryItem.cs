@@ -101,7 +101,7 @@ public class MemoryItem : Item
     private void GiveRewardAndDestroy()
     {
         isDownloading = false;
-        interactPlayer.Condition.AddMemory(downloadReward);
+        // TODO: 플레이어에게 보상 지급
         NetworkServer.UnSpawn(gameObject);
     }
 

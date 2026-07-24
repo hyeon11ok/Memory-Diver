@@ -56,14 +56,6 @@ public class PlayerCondition:BaseCondition
         return true;
     }
 
-    public void AddMemory(float memory)
-    {
-        if(!isLocalPlayer || !conditionValues.ContainsKey(ConditionType.Memory)) return;
-
-        conditionValues[ConditionType.Memory] += memory;
-        ClampCondition(ConditionType.Memory);
-    }
-
     public float GetCapacity()
     {
         if(!conditionValues.ContainsKey(ConditionType.Memory)){

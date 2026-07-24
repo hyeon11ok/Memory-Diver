@@ -59,5 +59,6 @@ public class MemoryItemSpawner : MonoBehaviour
         MemoryItem spawnedItem = Instantiate(itemPrefabs[randomIndex], transform.position, transform.rotation);
         NetworkServer.Spawn(spawnedItem.gameObject);
         spawnedItem.InitItem(); // 아이템 초기화
+        
     }
 }
